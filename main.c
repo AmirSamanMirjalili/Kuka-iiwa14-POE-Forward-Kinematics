@@ -11,7 +11,7 @@
 #include "string.h"
 
 
-char filename[] = "../scene.xml";
+char filename[] = "hello.xml";
 
 // MuJoCo data structures
 mjModel* m = NULL;                  // MuJoCo model
@@ -108,8 +108,8 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset)
 int main(int argc, const char** argv)
 {
 
-    // // activate software
-    // mj_activate("mjkey.txt");
+    // activate software
+    mj_activate("mjkey.txt");
 
 
     // load and compile model
@@ -199,7 +199,7 @@ int main(int argc, const char** argv)
     // free MuJoCo model and data, deactivate
     mj_deleteData(d);
     mj_deleteModel(m);
-    // mj_deactivate();
+    mj_deactivate();
 
     // terminate GLFW (crashes with Linux NVidia drivers)
     #if defined(__APPLE__) || defined(_WIN32)
