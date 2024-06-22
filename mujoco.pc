@@ -1,0 +1,10 @@
+prefix=/home/amir/Robotics/Mujoco/mujoco_2024/mujoco-3.1.4-linux-x86_64/mujoco-3.1.4
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib/
+includedir=${prefix}/include/
+
+Name: MuJoCo
+Description: MuJoCo physics engine
+Version: 3.1.4
+Libs: -L${libdir} -lmujoco
+Cflags: -I${includedir}
