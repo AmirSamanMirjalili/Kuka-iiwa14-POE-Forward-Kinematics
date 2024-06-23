@@ -180,7 +180,7 @@ int main(int argc, const char** argv)
         }
 
 //        // Set desired state (example values)
-//        d->qpos[0] = 33; // Set desired joint position
+//        d->qpos[0] =  1.0; // Set desired joint position
 //        d->qvel[0] = 1.0; // Set desired joint velocity
 //        d->qacc[0] = 2.0; // Set desired joint acceleration
 

@@ -168,9 +168,9 @@
 <!--    <general name="actuator7" joint="joint7" class="joint3"/>-->
 <!--  </actuator>-->
 
-  <keyframe>
-    <key name="home" qpos="0 0.785398 0 -1.5708 0 0 0" />
-  </keyframe>
+<!--  <keyframe>-->
+<!--    <key name="home" qpos="0 0.785398 0 -1.5708 0 0 0" />-->
+<!--  </keyframe>-->
 
 <!--  <keyframe>-->
 <!--    <key name="home" qpos="0 0.785398 0 -1.5708 0 0 0" ctrl="0 0.785398 0 -1.5708 0 0 0"/>-->
