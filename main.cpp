@@ -173,22 +173,22 @@ int main(int argc, const char** argv)
         //  Assuming MuJoCo can simulate faster than real-time, which it usually can,
         //  this loop will finish on time for the next frame to be rendered at 60 fps.
         //  Otherwise add a cpu timer and exit this loop when it is time to render.
-//        mjtNum simstart = d->time;
-//        while( d->time - simstart < 1.0/60.0 )
-//        {
-//            mj_step(m, d);
-//        }
+        mjtNum simstart = d->time;
+        while( d->time - simstart < 1.0/60.0 )
+        {
+            mj_step(m, d);
+        }
 
-        // Set desired state (example values)
-        d->qpos[0] = 33; // Set desired joint position
-        d->qvel[0] = 1.0; // Set desired joint velocity
-        d->qacc[0] = 2.0; // Set desired joint acceleration
+//        // Set desired state (example values)
+//        d->qpos[0] = 33; // Set desired joint position
+//        d->qvel[0] = 1.0; // Set desired joint velocity
+//        d->qacc[0] = 2.0; // Set desired joint acceleration
 
         // Perform inverse dynamics
-        mj_inverse(m, d);
+//        mj_inverse(m, d);
 
         // Print computed joint torque
-        std::cout << "Joint torque: " << d->qfrc_inverse[0] << std::endl;
+//        std::cout << "Joint torque: " << d->qfrc_inverse[0] << std::endl;
 
 
        // get framebuffer viewport
