@@ -9,7 +9,6 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include <iostream>
 
 
 char filename[] = "../scene.xml";
@@ -32,9 +31,6 @@ double lasty = 0;
 // holders of one step history of time and position to calculate dertivatives
 mjtNum position_history = 0;
 mjtNum previous_time = 0;
-
-//mujoco 6d vector
-mjtNum mujoco_6d_torque[6] = {0, 0, 0, 0, 0, 0};
 
 // controller related variables
 float_t ctrl_update_freq = 100;
@@ -64,6 +60,30 @@ void mouse_button(GLFWwindow* window, int button, int act, int mods)
     glfwGetCursorPos(window, &lastx, &lasty);
 }
 
+
+// Function to get body ID by pointing the mouse cursor
+void select_body(GLFWwindow* window, mjvScene* scn, mjvCamera* cam, mjModel* m, mjData* d) {
+    // Get the current mouse position
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+
+    // Get the window size
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    // Define the viewport
+    mjrRect viewport = {0, 0, width, height};
+
+    // Convert mouse position to normalized device coordinates
+    mjtNum selpos[3];
+    int geomid[1], flexid[1], skinid[1];
+    int selbody = mjv_select(m, d, &opt, (mjtNum)width / height, (mjtNum)xpos / width, (mjtNum)(height - ypos) / height, scn, selpos, geomid, flexid, skinid);
+
+    // If a body is selected, print its ID
+    if (selbody >= 0) {
+        printf("Selected body ID: %d\n", selbody);
+    }
+}
 
 // mouse move callback
 void mouse_move(GLFWwindow* window, double xpos, double ypos)
@@ -148,15 +168,20 @@ int main(int argc, const char** argv)
     mjv_defaultCamera(&cam);
     mjv_defaultOption(&opt);
     mjv_defaultScene(&scn);
+    
     mjr_defaultContext(&con);
     mjv_makeScene(m, &scn, 2000);                // space for 2000 objects
     mjr_makeContext(m, &con, mjFONTSCALE_150);   // model-specific context
-
+    // Adjust near clipping plane
+    // Access the OpenGL camera within the mjvScene
+    scn.camera[0].frustum_near = 0.1 * m->stat.extent; // Left camera
+    scn.camera[1].frustum_near = 0.1 * m->stat.extent; // Right camera
     // install GLFW mouse and keyboard callbacks
     glfwSetKeyCallback(window, keyboard);
     glfwSetCursorPosCallback(window, mouse_move);
     glfwSetMouseButtonCallback(window, mouse_button);
     glfwSetScrollCallback(window, scroll);
+
 
     // double arr_view[] = {89.608063, -11.588379, 5, 0.000000, 0.000000, 0.000000};
     // cam.azimuth = arr_view[0];
@@ -179,18 +204,8 @@ int main(int argc, const char** argv)
             mj_step(m, d);
         }
 
-//        // Set desired state (example values)
-//        d->qpos[0] =  1.0; // Set desired joint position
-//        d->qvel[0] = 1.0; // Set desired joint velocity
-//        d->qacc[0] = 2.0; // Set desired joint acceleration
-
-        // Perform inverse dynamics
-//        mj_inverse(m, d);
-
-        // Print computed joint torque
-//        std::cout << "Joint torque: " << d->qfrc_inverse[0] << std::endl;
-
-
+        // Call the select_body function to get the body ID
+        select_body(window, &scn, &cam, m, d);
        // get framebuffer viewport
         mjrRect viewport = {0, 0, 0, 0};
         glfwGetFramebufferSize(window, &viewport.width, &viewport.height);
