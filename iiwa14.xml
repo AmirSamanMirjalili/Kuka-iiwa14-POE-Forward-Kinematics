@@ -56,7 +56,7 @@
       <geom name="sphere_geom" type="sphere" size="0.05" rgba="1 0 0 1" />
     </body>
     <light name="top" pos="0 0 2" mode="trackcom" />
-    <body name="base" childclass="iiwa">
+    <body name="base" pos="0 0 1" childclass="iiwa">
       <inertial mass="5" pos="-0.1 0 0.07" diaginertia="0.05 0.06 0.03" />
       <geom class="visual" mesh="link_0" />
       <geom class="collision" size="0.12" pos="0 0 0.03" />
@@ -147,7 +147,7 @@
                     <body name="endeffector" pos="0 0 0.1">
                       <geom class="visual" type="sphere" size="0.01" rgba="0 1 0 1" />
                       <geom class="collision" size="0.03" />
-                      <site name="ee_site" pos="0 0 0" size="0.01"/>
+                      <site name="ee_site" pos="0 0 0" size="0.01" />
                     </body>
                   </body>
                 </body>
@@ -169,15 +169,22 @@
     <exclude body1="link5" body2="link7" />
   </contact>
 
-   <actuator>
-     <position name="actuator1" joint="joint1" kp="0" kv="0" class="joint1"/>
-     <!-- <general name="actuator2" joint="joint2" class="joint2"/>
+  <actuator>
+    <position name="actuator1" joint="joint1" kp="100" kv="10" class="joint1" />
+    <position name="actuator2" joint="joint2" kp="100" kv="10" class="joint2" />
+    <position name="actuator3" joint="joint3" kp="100" kv="10" class="joint1" />
+    <position name="actuator4" joint="joint4" kp="100" kv="10" class="joint2" />
+    <position name="actuator5" joint="joint5" kp="100" kv="10" class="joint1" />
+    <position name="actuator6" joint="joint6" kp="100" kv="10" class="joint2" />
+    <position name="actuator7" joint="joint7" kp="100" kv="10" class="joint3" />
+
+    <!-- <general name="actuator2" joint="joint2" class="joint2"/>
      <general name="actuator3" joint="joint3" class="joint1"/>
      <general name="actuator4" joint="joint4" class="joint2"/>
      <general name="actuator5" joint="joint5" class="joint1"/>
      <general name="actuator6" joint="joint6" class="joint2"/>
      <general name="actuator7" joint="joint7" class="joint3"/> -->
- </actuator>
+  </actuator>
 
   <!--  <keyframe>-->
   <!--    <key name="home" qpos="0 0.785398 0 -1.5708 0 0 0" />-->
@@ -188,9 +195,9 @@
   <!--  </keyframe>-->
   <sensor>
     <framepos name="mocap_pos_sens" objtype="body" objname="mocap_sphere" />
-    <subtreelinvel name="mocap_vel_sens"  body="mocap_sphere" />
-    <framepos name="ee_position_sensor" objtype="site" objname="ee_site"/>
-    <framelinvel name="ee_velocity_sensor" objtype="site" objname="ee_site"/>
+    <subtreelinvel name="mocap_vel_sens" body="mocap_sphere" />
+    <framepos name="ee_position_sensor" objtype="site" objname="ee_site" />
+    <framelinvel name="ee_velocity_sensor" objtype="site" objname="ee_site" />
   </sensor>
-  
+
 </mujoco>
