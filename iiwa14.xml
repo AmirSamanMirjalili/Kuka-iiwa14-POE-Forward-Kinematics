@@ -67,6 +67,7 @@
         <inertial mass="5.76" pos="0 -0.03 0.12" diaginertia="0.0333 0.033 0.0123" />
         <joint name="joint1" class="joint1" />
         <geom class="visual" mesh="link_1" />
+        <site name="hinge_site" pos="0 0 0" />
         <geom class="collision" size="0.08" pos="0 0 -0.0005" />
         <geom class="collision" size="0.075" pos="0.01 -0.025 0.0425" />
         <geom class="collision" size="0.075" pos="-0.01 -0.025 0.0425" />
@@ -76,6 +77,7 @@
           <inertial mass="6.35" pos="0.0003 0.059 0.042" diaginertia="0.0305 0.0304 0.011"
             quat="0 0 1 1" />
           <joint name="joint2" class="joint2" />
+          <site name="hinge_site2" pos="0 0 0" />
           <geom class="visual" material="orange" mesh="link_2_orange" />
           <geom class="visual" mesh="link_2_grey" />
           <geom class="collision" size="0.095" pos="0 0 -0.01" />
@@ -90,6 +92,7 @@
           <body name="link3" pos="0 0.2045 0" quat="0 0 1 1">
             <inertial mass="3.5" pos="0 0.03 0.13" diaginertia="0.025 0.0238 0.0076" />
             <joint name="joint3" class="joint1" />
+            <site name="hinge_site3" pos="0 0 0" />
             <geom class="visual" mesh="link_3" />
             <geom class="visual" material="light_gray" mesh="band" />
             <geom class="visual" material="black" mesh="kuka" />
@@ -106,6 +109,7 @@
               <inertial mass="3.5" pos="0 0.067 0.034" diaginertia="0.017 0.0164 0.006"
                 quat="1 1 0 0" />
               <joint name="joint4" class="joint2" />
+              <site name="hinge_site4" pos="0 0 0" />
               <geom class="visual" material="orange" mesh="link_4_orange" />
               <geom class="visual" mesh="link_4_grey" />
               <geom class="collision" size="0.078" pos="0 0.01 0.046" />
@@ -117,6 +121,7 @@
               <body name="link5" pos="0 0.1845 0" quat="0 0 1 1">
                 <inertial mass="3.5" pos="0.0001 0.021 0.076" diaginertia="0.01 0.0087 0.00449" />
                 <joint name="joint5" class="joint1" />
+                <site name="hinge_site5" pos="0 0 0" />
                 <geom class="visual" mesh="link_5" />
                 <geom class="visual" material="light_gray" mesh="band" />
                 <geom class="visual" material="black" mesh="kuka" />
@@ -133,6 +138,7 @@
                   <inertial mass="1.8" pos="0 0.0006 0.0004" diaginertia="0.0049 0.0047 0.0036"
                     quat="1 1 0 0" />
                   <joint name="joint6" class="joint2" />
+                  <site name="hinge_site6" pos="0 0 0" />
                   <geom class="visual" material="orange" mesh="link_6_orange" />
                   <geom class="visual" mesh="link_6_grey" />
                   <geom class="collision" size="0.055" pos="0 0 -0.059" />
@@ -141,6 +147,7 @@
                   <body name="link7" pos="0 0.081 0" quat="0 0 1 1">
                     <inertial mass="1.2" pos="0 0 0.02" diaginertia="0.001 0.001 0.001" />
                     <joint name="joint7" class="joint3" />
+                    <site name="hinge_site7" pos="0 0 0" />
                     <geom class="visual" mesh="link_7" />
                     <geom class="collision" size="0.06" pos="0 0 0.001" />
                     <site pos="0 0 0.045" name="attachment_site" />
@@ -198,6 +205,17 @@
     <subtreelinvel name="mocap_vel_sens" body="mocap_sphere" />
     <framepos name="ee_position_sensor" objtype="site" objname="ee_site" />
     <framelinvel name="ee_velocity_sensor" objtype="site" objname="ee_site" />
+
+
+    
+    <framepos name="hinge_position_sensor1" objtype="site" objname="hinge_site" />
+    <framepos name="hinge_position_sensor2" objtype="site" objname="hinge_site2" />
+    <framepos name="hinge_position_sensor3" objtype="site" objname="hinge_site3" />
+    <framepos name="hinge_position_sensor4" objtype="site" objname="hinge_site4" />
+    <framepos name="hinge_position_sensor5" objtype="site" objname="hinge_site5" />
+    <framepos name="hinge_position_sensor6" objtype="site" objname="hinge_site6" />
+    <framepos name="hinge_position_sensor7" objtype="site" objname="hinge_site7" />
+    
   </sensor>
 
 </mujoco>
