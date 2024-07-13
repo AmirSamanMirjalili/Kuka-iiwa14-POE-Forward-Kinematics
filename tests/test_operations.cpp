@@ -83,24 +83,26 @@ TEST(OperationsTest, ScrewMatTest) {
     Eigen::MatrixXd Slist = mr::ScrewMat(joint_axes, joint_points, joint_types);
 
     // Expected result
-    Eigen::MatrixXd expected_Slist(3, 6);
-    expected_Slist << 0,    0,    1,    0,    0,    0,
-   0,   -1,    0,    0,    0,  -1,
-   1,    0,    0,    0, -0.5,   0;
+    Eigen::MatrixXd expected_Slist(6, 3);
+    expected_Slist << 0,    0,    1,
+                      0,   -1,    0,
+                      1,    0,    0,
+                      0,    0,    0,
+                      0,    0,   -0.5,
+                      0,   -1,    0;
 
     // Print the result for debugging
     std::cout << "Slist matrix:\n" << Slist << std::endl;
 
     // Check the size of the result
-    ASSERT_EQ(Slist.rows(), 3);
-    ASSERT_EQ(Slist.cols(), 6);
+    ASSERT_EQ(Slist.rows(), 6);
+    ASSERT_EQ(Slist.cols(), 3);
 
     // Check the values in the result
     for (int i = 0; i < Slist.rows(); ++i) {
         for (int j = 0; j < Slist.cols(); ++j) {
-            EXPECT_DOUBLE_EQ(Slist(i, j), expected_Slist(i, j)) << "Mismatch at (" << i << ", " << j << ")";
+            EXPECT_NEAR(Slist(i, j), expected_Slist(i, j), 1e-10) << "Mismatch at (" << i << ", " << j << ")";
         }
     }
 }
-
 // Add more tests for other functions

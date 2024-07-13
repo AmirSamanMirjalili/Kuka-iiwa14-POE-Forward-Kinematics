@@ -23,9 +23,10 @@ include_directories(${MUJOCO_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${EIGEN3_INCLUDE
 # Link directories
 link_directories(${MUJOCO_LIBRARY_DIRS} ${GLFW_LIBRARY_DIRS})
 
+
+# Enable testing
+enable_testing()
 # Add subdirectories
 add_subdirectory(src)
 add_subdirectory(tests)
 
-# Enable testing
-enable_testing()
