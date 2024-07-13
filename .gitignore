@@ -1,1 +1,8 @@
 /build/
+/.idea/
+/.vscode/
+/backup/
+/cmake-build-debug/
+/code.zip
+/MUJOCO_LOG.TXT
+/test.xml
