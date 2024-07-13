@@ -1,6 +1,7 @@
 #include "mujoco_utils.h"
 #include <stdio.h>
 #include "Operations.h"
+#include <memory>
 
 extern mjModel* m;
 extern mjData* d;
@@ -14,6 +15,7 @@ extern int mocap_body_id;
 extern int* actuator_ids;
 
 void init_mujoco() {
+
     char error[1000] = "Could not load binary model";
     m = mj_loadXML(FILENAME, 0, error, 1000);
     if (!m) mju_error_s("Load model error: %s", error);
@@ -22,12 +24,16 @@ void init_mujoco() {
 }
 
 
-void calculate_joint_distances() {
-  
-        for (int i = 1; i < m->njnt; i++) {
+std::shared_ptr<mjtNum[]> calculate_joint_distances() {
+    // Use shared_ptr for automatic memory management
+    std::shared_ptr<mjtNum[]> link_length_array(new mjtNum[m->njnt], std::default_delete<mjtNum[]>());
+
+
+    for (int i = 1; i < m->njnt; i++) {
         // Get joint names
         char joint1_name[100];
         char joint2_name[100];
+
         sprintf(joint1_name, "joint%d", i);
         sprintf(joint2_name, "joint%d", i + 1);
 
@@ -50,8 +56,14 @@ void calculate_joint_distances() {
         // Calculate the link length
         mjtNum link_length = mju_dist3(joint1_pos, joint2_pos); 
 
+        //store the link length
+        link_length_array[i] = link_length;
+
+
         DEBUG_PRINT("Link %d length: %f\n", i, link_length);
     }
+
+    return link_length_array;
 }
 
 void get_joint_information() {
@@ -114,7 +126,7 @@ void get_joint_information() {
 
 void get_kinematic_parameters(const mjModel* m, mjData* d) {
     get_joint_information();
-    calculate_joint_distances();
+    std::shared_ptr<mjtNum[]> link_length_array = calculate_joint_distances();
     
 }
 
@@ -178,7 +190,7 @@ void init_control() {
 
 void update_control(const mjModel* m, mjData* d) {
     init_control();
-    get_kinematic_parameters(m,d);
+    // get_kinematic_parameters(m,d);
     mr::verifyForwardKinematics(m, d);
     // print_sensor_data();
 }

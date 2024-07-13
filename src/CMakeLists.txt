@@ -14,4 +14,4 @@ set(SOURCES
 add_executable(main ${SOURCES})
 
 # Link libraries
-target_link_libraries(main ${MUJOCO_LIBRARIES} ${GLFW_LIBRARIES} ${MODERN_ROBOTICS_LIB} pthread)
+target_link_libraries(main ${MUJOCO_LIBRARIES} ${GLFW_LIBRARIES} ${MODERN_ROBOTICS_LIB} Eigen3::Eigen pthread)

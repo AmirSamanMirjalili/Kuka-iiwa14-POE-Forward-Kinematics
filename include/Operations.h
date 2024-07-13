@@ -5,6 +5,7 @@
 #include <mujoco_utils.h>
 #include <Eigen/Dense>
 #include <vector>
+#include <memory>
 
 namespace mr {
 
@@ -25,6 +26,8 @@ Returns: The screw axis of the joint in a 6x1 vector
 
 Eigen::VectorXd CalculateScrewAxis(const std::string& joint_type, const Eigen::Vector3d& axis_direction, 
                                     const Eigen::Vector3d& point_on_axis);
+
+
 
 void verifyForwardKinematics(const mjModel* m, mjData* data);
 

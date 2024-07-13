@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Find MuJoCo and GLFW
 find_package(PkgConfig REQUIRED)
+# Find Eigen3
+find_package(Eigen3 REQUIRED NO_MODULE)
+
 pkg_check_modules(MUJOCO REQUIRED mujoco)
 pkg_check_modules(GLFW REQUIRED glfw3)
 
@@ -16,7 +19,7 @@ message(STATUS "MuJoCo library directories: ${MUJOCO_LIBRARY_DIRS}")
 message(STATUS "MuJoCo libraries: ${MUJOCO_LIBRARIES}")
 
 # Include directories
-include_directories(${MUJOCO_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include)
+include_directories(${MUJOCO_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
 # Link directories
 link_directories(${MUJOCO_LIBRARY_DIRS} ${GLFW_LIBRARY_DIRS})

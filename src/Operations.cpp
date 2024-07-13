@@ -52,29 +52,32 @@ namespace mr
         return screw_axis.transpose();
     }
 
- // Function to calculate and store screw axes in a matrix
-Eigen::MatrixXd ScrewMat(const std::vector<Eigen::Vector3d>& joint_axes, 
-                         const std::vector<Eigen::Vector3d>& joint_points, 
-                         const std::vector<std::string>& joint_types) {
-  // Number of joints and size of screw axis
-  int joint_num = joint_axes.size();
-  const int screw_axes_size = 6;
+    // Function to calculate and store screw axes in a matrix
+    Eigen::MatrixXd ScrewMat(const std::vector<Eigen::Vector3d> &joint_axes,
+                             const std::vector<Eigen::Vector3d> &joint_points,
+                             const std::vector<std::string> &joint_types)
+    {
+        // Number of joints and size of screw axis
+        int joint_num = joint_axes.size();
+        const int screw_axes_size = 6;
 
-  // Initialize the matrix to store screw axes
-  Eigen::MatrixXd Slist(joint_num, screw_axes_size);
+        // Initialize the matrix to store screw axes
+        Eigen::MatrixXd Slist(joint_num, screw_axes_size);
 
-  // Loop to calculate and store screw axes
-  for (int i = 0; i < joint_num; ++i) {
-    Eigen::VectorXd S = CalculateScrewAxis(joint_types[i], joint_axes[i], joint_points[i]);
-    Slist.row(i) = S;
-    std::cout << "S" << i + 1 << ": " << S.transpose() << std::endl;
-  }
+        // Loop to calculate and store screw axes
+        for (int i = 0; i < joint_num; ++i)
+        {
+            Eigen::VectorXd S = CalculateScrewAxis(joint_types[i], joint_axes[i], joint_points[i]);
+            Slist.row(i) = S;
+            std::cout << "S" << i + 1 << ": " << S.transpose() << std::endl;
+        }
 
-  // Print the entire Slist matrix
-  std::cout << "Slist matrix:\n" << Slist << std::endl;
+        // Print the entire Slist matrix
+        std::cout << "Slist matrix:\n"
+                  << Slist << std::endl;
 
-  return Slist;
-}
+        return Slist;
+    }
 
     void verifyForwardKinematics(const mjModel *m, mjData *d)
     {
@@ -116,32 +119,52 @@ Eigen::MatrixXd ScrewMat(const std::vector<Eigen::Vector3d>& joint_axes,
             jointAnglesEigen[i] = jointAngles[i];
         }
 
-        // Example: 3R Spatial Open Chain (from Modern Robotics)
-        double L1 = 1.0; // Example link lengths
-        double L2 = 0.5;
 
+         // Call the function to calculate joint distances
+        std::shared_ptr<mjtNum[]> link_lengths = calculate_joint_distances();
+
+            // Use the link lengths (example: print them)
+        for (int i = 1; i < m->njnt; i++) {
+            printf("Link %d length[Operation]: %f\n", i, link_lengths[i]);
+        }
+        
+        //TODO: Get the joint axis from the model
         // Define joint axes and points
         std::vector<Eigen::Vector3d> joint_axes = {
             {0, 0, 1},
+            {0, 1, 0},
+            {0, 0, 1},
             {0, -1, 0},
-            {1, 0, 0}};
+            {0, 0, 1},
+            {0, 1, 0},
+            {0, 0, 1}};
+
 
         std::vector<Eigen::Vector3d> joint_points = {
             {0, 0, 0},
-            {L1, 0, 0},
-            {0, 0, -L2}};
+            {0, 0, link_lengths[1]},
+            {0, 0, link_lengths[1]+link_lengths[2]},
+            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]},
+            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]},
+            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]+link_lengths[5]},
+            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]+link_lengths[5]+link_lengths[6]}
+            };
 
         // Define joint types
         std::vector<std::string> joint_types = {
+            "revolute",
+            "revolute",
+            "revolute",
+            "revolute",
             "revolute",
             "revolute",
             "revolute"};
 
         // 4. Define the end-effector configuration at home position (M)
         Eigen::Matrix4d M;
-        M << 1, 0, 0, 2,
+        M << 1, 0, 0, 0,
             0, 1, 0, 0,
-            0, 0, 1, 1,
+            0, 0, 1, link_lengths[0]+link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]+link_lengths[5]+link_lengths[6],
             0, 0, 0, 1;
 
         // 5. Define the list of screw axes for each joint in space frame (Slist)
