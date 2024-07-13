@@ -1,14 +1,13 @@
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Add source files
 set(SOURCES
     main.cpp
     mujoco_utils.cpp
     glfw_utils.cpp
     Operations.cpp
-    )
-
+    globals.cpp
+)
 
 # Add executable
 add_executable(main ${SOURCES})

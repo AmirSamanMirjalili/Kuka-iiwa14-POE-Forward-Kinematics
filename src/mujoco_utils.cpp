@@ -3,16 +3,16 @@
 #include "Operations.h"
 #include <memory>
 
+extern const double CTRL_UPDATE_FREQ;
+extern bool debug_mode;
+extern const char* FILENAME;
 extern mjModel* m;
 extern mjData* d;
-extern mjtNum last_update;
-extern mjtNum ctrl;
+extern int mocap_body_id;
+extern int* actuator_ids;
 extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
-extern const char* FILENAME;
-extern int mocap_body_id;
-extern int* actuator_ids;
 
 void init_mujoco() {
 

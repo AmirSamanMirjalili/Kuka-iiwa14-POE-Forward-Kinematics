@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Find MuJoCo and GLFW
 find_package(PkgConfig REQUIRED)
-# Find Eigen3
 find_package(Eigen3 REQUIRED NO_MODULE)
 
 pkg_check_modules(MUJOCO REQUIRED mujoco)
@@ -26,4 +25,7 @@ link_directories(${MUJOCO_LIBRARY_DIRS} ${GLFW_LIBRARY_DIRS})
 
 # Add subdirectories
 add_subdirectory(src)
-# add_subdirectory(include)
+add_subdirectory(tests)
+
+# Enable testing
+enable_testing()

@@ -49,7 +49,11 @@ namespace mr
                 value = 0.0; // Adjusting the value to be exactly zero
             }
         }
-        return screw_axis.transpose();
+        
+        //print the screw axis
+        std::cout << "Screw axis: " << screw_axis.transpose() << std::endl;
+
+        return screw_axis;
     }
 
     // Function to calculate and store screw axes in a matrix
@@ -62,13 +66,13 @@ namespace mr
         const int screw_axes_size = 6;
 
         // Initialize the matrix to store screw axes
-        Eigen::MatrixXd Slist(joint_num, screw_axes_size);
+        Eigen::MatrixXd Slist(screw_axes_size,joint_num);
 
         // Loop to calculate and store screw axes
         for (int i = 0; i < joint_num; ++i)
         {
             Eigen::VectorXd S = CalculateScrewAxis(joint_types[i], joint_axes[i], joint_points[i]);
-            Slist.row(i) = S;
+            Slist.col(i) = S;
             std::cout << "S" << i + 1 << ": " << S.transpose() << std::endl;
         }
 
@@ -173,23 +177,47 @@ namespace mr
         Eigen::MatrixXd Slist(Jonit_num, 6);
         Slist = ScrewMat(joint_axes, joint_points, joint_types);
 
-        // // 6. Compute the theoretical forward kinematics
-        // Eigen::Matrix4d T = FKinSpace(M, Slist, jointAnglesEigen);
+        // 6. Compute the theoretical forward kinematics
+        Eigen::Matrix4d T = FKinSpace(M, Slist, jointAnglesEigen);
 
-        // // 7. Extract the theoretical end-effector position and rotation matrix
-        // Eigen::Vector3d theoreticalEePos = T.block<3, 1>(0, 3);
-        // Eigen::Matrix3d theoreticalEeRotMat = T.block<3, 3>(0, 0);
+        // Ensure that T is a 4x4 matrix
+        if (T.rows() != 4 || T.cols() != 4) {
+            std::cerr << "Error: T is not a 4x4 matrix." << std::endl;
+            return;
+        }
 
-        // // 8. Compute position error
-        // mju_sub3(positionError, mujocoEePos, theoreticalEePos.data());
+        // 7. Extract the theoretical end-effector position and rotation matrix
+        Eigen::Vector3d theoreticalEePos = T.block<3, 1>(0, 3);
+        Eigen::Matrix3d theoreticalEeRotMat = T.block<3, 3>(0, 0);
 
-        // // 9. Compute orientation error
-        // mj_mat2AxisAngle(mujocoAxisAngle, mujocoEeRotMat);
+        //print the forward kinematics
+        std::cout << "Theoretical Forward Kinematics: \n"
+                  << T << std::endl;
+
+      
+        //print the theoretical end-effector position and rotation matrix
+        std::cout << "Theoretical End-effector position: \n"
+                  << theoreticalEePos << std::endl;
+
+        // Declare and initialize the position error array
+        mjtNum positionError[3];    
+
+        // 8. Compute position error
+        mju_sub3(positionError, eePos, theoreticalEePos.data());
+
+
+        // // Declare and initialize the axis-angle arrays
+        // mjtNum mujocoAxisAngle[3];
+        // mjtNum mujocoEeRotMat[9];
+
+
+        
+        // 9. Compute orientation error
+        // mj_mat2AxisAngle(mujocoAxisAngle, eeRotMat);
         // Eigen::Vector3d theoreticalAxisAngle = theoreticalEeRotMat.eulerAngles(0, 1, 2); // Example conversion, adjust as needed
         // mjtNum orientationError = mju_dist3(mujocoAxisAngle, theoreticalAxisAngle.data());
-
-        // // 10. Print errors
-        // printf("Position error: %f %f %f\n", positionError[0], positionError[1], positionError[2]);
+        // 10. Print errors
+        printf("Position error: %f %f %f\n", positionError[0], positionError[1], positionError[2]);
         // printf("Orientation error: %f\n", orientationError);
 
         // // 5. Calculate theoretical forward kinematics

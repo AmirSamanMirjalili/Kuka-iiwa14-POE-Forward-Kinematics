@@ -7,38 +7,24 @@
 #include "mujoco_utils.h"
 #include "glfw_utils.h"
 
-bool debug_mode = false;
-
-const char* FILENAME = "/home/amir/Robotics/Mujoco/Projects/Kuka_calibration/Kuka-iiwa14-kinodyn-calibration/scene.xml";
-const double CTRL_UPDATE_FREQ = 100.0;
-
-// MuJoCo data structures
-mjModel* m = NULL;
-mjData* d = NULL;
-mjvCamera cam;
-mjvOption opt;
-mjvScene scn;
-mjrContext con;
-mjvPerturb pert;
-int mocap_body_id;
-// Actuator ID array
-int* actuator_ids = nullptr;
-
-// double T[7] = {2.5, 3.0, 4.2, 1.8, 5.5, 2.1, 3.7}; // Example periods
-
-// Mouse interaction variables
-bool button_left = false, button_middle = false, button_right = false;
-double lastx = 0, lasty = 0;
-
-// Controller variables
-mjtNum last_update = 0.0;
-mjtNum ctrl;
-
-// Force application variables
-bool isPushing = false;
-int grabbedBodyId = -1;
-mjtNum pushForce[3] = {0, 0, 0};
-double pushStartX, pushStartY;
+// Define the global variables
+// Declare global variables as extern
+extern bool debug_mode;
+extern const char* FILENAME;
+extern const double CTRL_UPDATE_FREQ;
+extern mjModel* m;
+extern mjData* d;
+extern mjvCamera cam;
+extern mjvOption opt;
+extern mjvScene scn;
+extern mjrContext con;
+extern mjvPerturb pert;
+extern int mocap_body_id;
+extern int* actuator_ids;
+extern bool isPushing;
+extern int grabbedBodyId;
+extern mjtNum pushForce[3];
+extern double pushStartX, pushStartY;
 
 void simulate_and_render(GLFWwindow* window) {
     while (!glfwWindowShouldClose(window)) {
