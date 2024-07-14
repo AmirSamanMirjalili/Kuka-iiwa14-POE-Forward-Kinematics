@@ -37,8 +37,8 @@ namespace mr
         }
         else
         {
-            std::cerr << "Error: Invalid joint type. Must be 'revolute' or 'prismatic'." << std::endl;
-            return Eigen::VectorXd::Zero(6); // Return a zero vector on error
+            KINEMATIC_DEBUG_PRINT("Error: Invalid joint type. Must be 'revolute' or 'prismatic'.");
+            return Eigen::VectorXd::Zero(6);
         }
 
         // Example logic for adjusting values
@@ -51,7 +51,7 @@ namespace mr
         }
         
         //print the screw axis
-        std::cout << "Screw axis: " << screw_axis.transpose() << std::endl;
+        KINEMATIC_DEBUG_PRINT("Screw axis: " << screw_axis.transpose());
 
         return screw_axis;
     }
@@ -73,12 +73,12 @@ namespace mr
         {
             Eigen::VectorXd S = CalculateScrewAxis(joint_types[i], joint_axes[i], joint_points[i]);
             Slist.col(i) = S;
-            std::cout << "S" << i + 1 << ": " << S.transpose() << std::endl;
+            KINEMATIC_DEBUG_PRINT("S" << i + 1 << ": " << S.transpose());
         }
 
         // Print the entire Slist matrix
-        std::cout << "Slist matrix:\n"
-                  << Slist << std::endl;
+        KINEMATIC_DEBUG_PRINT("Slist matrix:\n" << Slist);
+
 
         return Slist;
     }
@@ -100,11 +100,11 @@ namespace mr
         mjtNum eeRotMat[9];
         mju_copy3(eePos, d->xpos + 3 * eeBodyId);
         mju_copy(eeRotMat, d->xmat + 9 * eeBodyId, 9);
-        printf("End-effector position: (%f, %f, %f)\n", eePos[0], eePos[1], eePos[2]);
-        printf("End-effector rotation matrix:\n");
+        KINEMATIC_DEBUG_PRINT("End-effector position: (" << eePos[0] << ", " << eePos[1] << ", " << eePos[2] << ")");
+        KINEMATIC_DEBUG_PRINT("End-effector rotation matrix:");
         for (int i = 0; i < 3; i++)
         {
-            printf("%f %f %f\n", eeRotMat[3 * i], eeRotMat[3 * i + 1], eeRotMat[3 * i + 2]);
+            KINEMATIC_DEBUG_PRINT(eeRotMat[3 * i] << " " << eeRotMat[3 * i + 1] << " " << eeRotMat[3 * i + 2]);
         }
 
         // 4. Get joint angles from MuJoCo data (using mjtNum array)
@@ -113,7 +113,7 @@ namespace mr
         for (int i = 0; i < 7; ++i)
         {
             jointAngles[i] = d->qpos[m->jnt_qposadr[i]]; // Assuming joint IDs start from 0
-            printf("Joint %d angle: %f\n", i, jointAngles[i]);
+            KINEMATIC_DEBUG_PRINT("Joint " << i << " angle: " << jointAngles[i]);
         }
 
         // Convert mjtNum array to Eigen::VectorXd
@@ -129,19 +129,19 @@ namespace mr
 
             // Use the link lengths (example: print them)
         for (int i = 1; i < m->njnt; i++) {
-            printf("Link %d length[Operation]: %f\n", i, link_lengths[i]);
+            KINEMATIC_DEBUG_PRINT("Link " << i << " length[Operation]: " << link_lengths[i]);
         }
         
         //TODO: Get the joint axis from the model
         // Define joint axes and points
         std::vector<Eigen::Vector3d> joint_axes = {
-            {0, 0, 1},
-            {0, 1, 0},
-            {0, 0, 1},
-            {0, -1, 0},
-            {0, 0, 1},
-            {0, 1, 0},
-            {0, 0, 1}};
+            {0, 0, 1}, //joint 1
+            {0, 1, 0}, //joint2
+            {0, 0, 1}, //joint3
+            {0, -1, 0}, //joint4
+            {0, 0, 1}, //jonit5
+            {0, 1, 0}, //jonit6
+            {0, 0, 1}}; //joint7
 
 
         std::vector<Eigen::Vector3d> joint_points = {
@@ -174,15 +174,21 @@ namespace mr
         // 5. Define the list of screw axes for each joint in space frame (Slist)
         // Define the list of screw axes for each joint in space frame (Slist)
         int Jonit_num = m->njnt;
-        Eigen::MatrixXd Slist(Jonit_num, 6);
+        Eigen::MatrixXd Slist(6,Jonit_num);
         Slist = ScrewMat(joint_axes, joint_points, joint_types);
 
+        //convert jonit angles from radian to degree
+        for (int i = 0; i < 7; ++i)
+        {
+            jointAngles[i] = jointAngles[i] * 180 / M_PI;
+        }
+        
         // 6. Compute the theoretical forward kinematics
         Eigen::Matrix4d T = FKinSpace(M, Slist, jointAnglesEigen);
 
         // Ensure that T is a 4x4 matrix
         if (T.rows() != 4 || T.cols() != 4) {
-            std::cerr << "Error: T is not a 4x4 matrix." << std::endl;
+            KINEMATIC_DEBUG_PRINT("Error: T is not a 4x4 matrix.");
             return;
         }
 
@@ -190,14 +196,8 @@ namespace mr
         Eigen::Vector3d theoreticalEePos = T.block<3, 1>(0, 3);
         Eigen::Matrix3d theoreticalEeRotMat = T.block<3, 3>(0, 0);
 
-        //print the forward kinematics
-        std::cout << "Theoretical Forward Kinematics: \n"
-                  << T << std::endl;
-
-      
-        //print the theoretical end-effector position and rotation matrix
-        std::cout << "Theoretical End-effector position: \n"
-                  << theoreticalEePos << std::endl;
+        KINEMATIC_DEBUG_PRINT("Theoretical Forward Kinematics: \n" << T);
+        KINEMATIC_DEBUG_PRINT("Theoretical End-effector position: \n" << theoreticalEePos);
 
         // Declare and initialize the position error array
         mjtNum positionError[3];    
@@ -205,7 +205,10 @@ namespace mr
         // 8. Compute position error
         mju_sub3(positionError, eePos, theoreticalEePos.data());
 
-
+        
+        KINEMATIC_DEBUG_PRINT("Position error: " << positionError[0] << " " << positionError[1] << " " << positionError[2]);
+        
+        
         // // Declare and initialize the axis-angle arrays
         // mjtNum mujocoAxisAngle[3];
         // mjtNum mujocoEeRotMat[9];
@@ -217,7 +220,7 @@ namespace mr
         // Eigen::Vector3d theoreticalAxisAngle = theoreticalEeRotMat.eulerAngles(0, 1, 2); // Example conversion, adjust as needed
         // mjtNum orientationError = mju_dist3(mujocoAxisAngle, theoreticalAxisAngle.data());
         // 10. Print errors
-        printf("Position error: %f %f %f\n", positionError[0], positionError[1], positionError[2]);
+        
         // printf("Orientation error: %f\n", orientationError);
 
         // // 5. Calculate theoretical forward kinematics

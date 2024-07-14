@@ -165,3 +165,74 @@ TEST(OperationsTest, ScrewMatTest_UR5_6R) {
         }
     }
 }
+
+// Function to be tested
+TEST(OperationsTest, FkinSpace_UR5_6R)  {
+    // UR5 6R robot arm
+
+    // Define joint axes
+    std::vector<Eigen::Vector3d> joint_axes = {
+        {0, 0, 1},
+        {0, 1, 0},
+        {0, 1, 0},
+        {0, 1, 0},
+        {0, 0, -1},
+        {0, 1, 0}
+    };
+    double W1 = 0.109, W2 = 0.082, L1 = 0.425, L2 = 0.392, H1 = 0.089, H2 = 0.095;
+
+    Eigen::Matrix4d M;
+    M << 1, 0, 0, L1 + L2,
+         0, 1, 0, W1 + W2,
+         0, 1, 0, H1 - H2,
+         0, 0, 0, 1;
+
+    // Define points on the joint axes
+    std::vector<Eigen::Vector3d> joint_points = {
+        {0, 0, 0},                // joint1
+        {0, 0, H1},               // joint2
+        {L1, 0, H1},              // joint3
+        {L1 + L2, 0, H1},         // joint4
+        {L1 + L2, W1, 0},         // joint5
+        {L1 + L2, 0, H1 - H2}     // joint6
+    };
+
+    // Define joint types
+    std::vector<std::string> joint_types = {
+        "revolute",
+        "revolute",
+        "revolute",
+        "revolute",
+        "revolute",
+        "revolute"
+    };
+
+    // Call the ScrewMat function
+    Eigen::MatrixXd Slist = mr::ScrewMat(joint_axes, joint_points, joint_types);
+
+    // Joint angles
+    Eigen::VectorXd thetaList(6);
+    thetaList << 0, -M_PI / 2, 0, 0, M_PI / 2, 0;
+
+    // Compute forward kinematics
+    Eigen::Matrix4d T = mr::FKinSpace(M, Slist, thetaList);
+
+    // Print the result
+    std::cout << "The end-effector configuration is:\n" << T << std::endl;
+
+    // Expected result
+    Eigen::Matrix4d expected_T;
+    expected_T << 1.2326e-32, -1, 0, 0.095,
+                  -1, 1.11022e-16, 0, 0.109,
+                  1.11022e-16, 1, 0, 0.988,
+                  0, 0, 0, 1;
+
+    // Check the values in the result
+    for (int i = 0; i < T.rows(); ++i) {
+        for (int j = 0; j < T.cols(); ++j) {
+            EXPECT_NEAR(T(i, j), expected_T(i, j), 1e-4) << "Mismatch at (" << i << ", " << j << ")";
+        }
+    }
+}
+
+

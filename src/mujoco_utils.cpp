@@ -13,6 +13,7 @@ extern int* actuator_ids;
 extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
+bool kinematic_debug_mode = true;
 
 void init_mujoco() {
 

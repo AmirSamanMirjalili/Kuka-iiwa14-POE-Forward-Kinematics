@@ -15,8 +15,13 @@ extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
 
+extern bool kinematic_debug_mode;
+
 #define DEBUG_PRINT(...) \
     do { if (debug_mode) fprintf(stderr, __VA_ARGS__); } while (0)
+
+#define KINEMATIC_DEBUG_PRINT(...) \
+    do { if (kinematic_debug_mode) std::cout << __VA_ARGS__ << std::endl; } while (0)
 
 void init_mujoco();
 void cleanup_mujoco();
