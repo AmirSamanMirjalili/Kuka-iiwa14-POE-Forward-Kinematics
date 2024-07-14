@@ -75,7 +75,7 @@ void get_joint_information() {
     for (int i = 0; i < m->njnt; i++) {
         mjtNum global_joint_pos[3];
         mj_local2Global(d, global_joint_pos, NULL, m->jnt_pos + 3*i, NULL, m->jnt_bodyid[i], 0);
-        DEBUG_PRINT("Joint %d global position: %f %f %f\n", i, global_joint_pos[0], global_joint_pos[1], global_joint_pos[2]);
+        printf("Joint %d global position: %f %f %f\n", i, global_joint_pos[0], global_joint_pos[1], global_joint_pos[2]);
     }
 
     
@@ -128,6 +128,7 @@ void get_joint_information() {
 void get_kinematic_parameters(const mjModel* m, mjData* d) {
     get_joint_information();
     std::shared_ptr<mjtNum[]> link_length_array = calculate_joint_distances();
+    
     
 }
 
@@ -190,8 +191,8 @@ void init_control() {
 }
 
 void update_control(const mjModel* m, mjData* d) {
-    init_control();
-    // get_kinematic_parameters(m,d);
+    // init_control();
+    get_kinematic_parameters(m,d);
     mr::verifyForwardKinematics(m, d);
     // print_sensor_data();
 }

@@ -49,8 +49,8 @@ namespace mr
                 value = 0.0; // Adjusting the value to be exactly zero
             }
         }
-        
-        //print the screw axis
+
+        // print the screw axis
         KINEMATIC_DEBUG_PRINT("Screw axis: " << screw_axis.transpose());
 
         return screw_axis;
@@ -66,7 +66,7 @@ namespace mr
         const int screw_axes_size = 6;
 
         // Initialize the matrix to store screw axes
-        Eigen::MatrixXd Slist(screw_axes_size,joint_num);
+        Eigen::MatrixXd Slist(screw_axes_size, joint_num);
 
         // Loop to calculate and store screw axes
         for (int i = 0; i < joint_num; ++i)
@@ -77,8 +77,8 @@ namespace mr
         }
 
         // Print the entire Slist matrix
-        KINEMATIC_DEBUG_PRINT("Slist matrix:\n" << Slist);
-
+        KINEMATIC_DEBUG_PRINT("Slist matrix:\n"
+                              << Slist);
 
         return Slist;
     }
@@ -123,36 +123,47 @@ namespace mr
             jointAnglesEigen[i] = jointAngles[i];
         }
 
-
-         // Call the function to calculate joint distances
+        // Call the function to calculate joint distances
         std::shared_ptr<mjtNum[]> link_lengths = calculate_joint_distances();
 
-            // Use the link lengths (example: print them)
-        for (int i = 1; i < m->njnt; i++) {
+        // Use the link lengths (example: print them)
+        for (int i = 1; i < m->njnt; i++)
+        {
             KINEMATIC_DEBUG_PRINT("Link " << i << " length[Operation]: " << link_lengths[i]);
         }
-        
-        //TODO: Get the joint axis from the model
-        // Define joint axes and points
-        std::vector<Eigen::Vector3d> joint_axes = {
-            {0, 0, 1}, //joint 1
-            {0, 1, 0}, //joint2
-            {0, 0, 1}, //joint3
-            {0, -1, 0}, //joint4
-            {0, 0, 1}, //jonit5
-            {0, 1, 0}, //jonit6
-            {0, 0, 1}}; //joint7
 
+        // TODO: Get the joint axis from the model
+        //  Define joint axes and points
+        std::vector<Eigen::Vector3d> joint_axes = {
+            {0, 0, 1},  // joint 1
+            {0, 1, 0},  // joint2
+            {0, 0, 1},  // joint3
+            {0, -1, 0}, // joint4
+            {0, 0, 1},  // jonit5
+            {0, 1, 0},  // jonit6
+            {0, 0, 1}}; // joint7
+
+        // Get the global positions of the joint0 which is the base frame
+        mjtNum base_frame[3];
+        mj_local2Global(d, base_frame, NULL, m->jnt_pos + 3 * m->jnt_bodyid[0], NULL, m->jnt_bodyid[0], 0);
+        KINEMATIC_DEBUG_PRINT("Base frame position in mujoco world frame: (" << base_frame[0] << ", " << base_frame[1] << ", " << base_frame[2] << ")");
+
+        Eigen::Vector3d base_frame_eigen(base_frame[0], base_frame[1], base_frame[2]);
 
         std::vector<Eigen::Vector3d> joint_points = {
             {0, 0, 0},
             {0, 0, link_lengths[1]},
-            {0, 0, link_lengths[1]+link_lengths[2]},
-            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]},
-            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]},
-            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]+link_lengths[5]},
-            {0, 0, link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]+link_lengths[5]+link_lengths[6]}
-            };
+            {0, 0, link_lengths[1] + link_lengths[2]},
+            {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3]},
+            {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4]},
+            {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4] + link_lengths[5]},
+            {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4] + link_lengths[5] + link_lengths[6]}};
+
+        // compensating for the base frame offset from the mujoco world frame
+        for (auto &point : joint_points)
+        {
+            point += base_frame_eigen;
+        }
 
         // Define joint types
         std::vector<std::string> joint_types = {
@@ -168,26 +179,63 @@ namespace mr
         Eigen::Matrix4d M;
         M << 1, 0, 0, 0,
             0, 1, 0, 0,
-            0, 0, 1, link_lengths[0]+link_lengths[1]+link_lengths[2]+link_lengths[3]+link_lengths[4]+link_lengths[5]+link_lengths[6],
+            0, 0, 1, link_lengths[0] + link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4] + link_lengths[5] + link_lengths[6],
             0, 0, 0, 1;
+
+        int Jonit_num = m->njnt;
+        // accounting for base frame offset from the mujoco world frame
+        M.block<3, 1>(0, 3) += base_frame_eigen;
+
+        // accounting for Endeffector offset from last joint
+        //  Get the global positions of the joint0 which is the base frame
+        //  Get the global position of the last joint (joint 6)
+        // Get the number of joints
+        
+
+        // Get the ID of the last joint
+        int last_joint_id = Jonit_num - 1;
+
+        // Declare an array to store the global position
+        mjtNum last_joint_pos[3];
+
+        // Get the global position of the last joint
+        mj_local2Global(d, last_joint_pos, NULL, m->jnt_pos + 3 * last_joint_id, NULL, m->jnt_bodyid[last_joint_id], 0);
+
+        // Print the global position of the last joint
+        KINEMATIC_DEBUG_PRINT("Last joint (ID: " << last_joint_id << ") global position: "
+                                                 << last_joint_pos[0] << " "
+                                                 << last_joint_pos[1] << " "
+                                                 << last_joint_pos[2]);
+
+        // Calculate the difference between the end-effector position and the last joint position
+        Eigen::Vector3d last_joint_pos_eigen(last_joint_pos[0], last_joint_pos[1], last_joint_pos[2]);
+        Eigen::Vector3d ee_pos_eigen(eePos[0], eePos[1], eePos[2]);
+        Eigen::Vector3d difference = ee_pos_eigen - last_joint_pos_eigen;
+
+        // Print the difference
+        KINEMATIC_DEBUG_PRINT("Difference between last joint and end-effector position: ("
+                              << difference[0] << ", " << difference[1] << ", " << difference[2] << ")");
+
+        // adding to Home position
+        M.block<3, 1>(0, 3) += difference;
 
         // 5. Define the list of screw axes for each joint in space frame (Slist)
         // Define the list of screw axes for each joint in space frame (Slist)
-        int Jonit_num = m->njnt;
-        Eigen::MatrixXd Slist(6,Jonit_num);
+        Eigen::MatrixXd Slist(6, Jonit_num);
         Slist = ScrewMat(joint_axes, joint_points, joint_types);
 
-        //convert jonit angles from radian to degree
-        for (int i = 0; i < 7; ++i)
+        // convert jonit angles from radian to degree
+        for (int i = 0; i < m->njnt; ++i)
         {
             jointAngles[i] = jointAngles[i] * 180 / M_PI;
         }
-        
+
         // 6. Compute the theoretical forward kinematics
         Eigen::Matrix4d T = FKinSpace(M, Slist, jointAnglesEigen);
 
         // Ensure that T is a 4x4 matrix
-        if (T.rows() != 4 || T.cols() != 4) {
+        if (T.rows() != 4 || T.cols() != 4)
+        {
             KINEMATIC_DEBUG_PRINT("Error: T is not a 4x4 matrix.");
             return;
         }
@@ -196,31 +244,29 @@ namespace mr
         Eigen::Vector3d theoreticalEePos = T.block<3, 1>(0, 3);
         Eigen::Matrix3d theoreticalEeRotMat = T.block<3, 3>(0, 0);
 
-        KINEMATIC_DEBUG_PRINT("Theoretical Forward Kinematics: \n" << T);
-        KINEMATIC_DEBUG_PRINT("Theoretical End-effector position: \n" << theoreticalEePos);
+        KINEMATIC_DEBUG_PRINT("Theoretical Forward Kinematics: \n"
+                              << T);
+        KINEMATIC_DEBUG_PRINT("Theoretical End-effector position: \n"
+                              << theoreticalEePos);
 
         // Declare and initialize the position error array
-        mjtNum positionError[3];    
+        mjtNum positionError[3];
 
         // 8. Compute position error
         mju_sub3(positionError, eePos, theoreticalEePos.data());
 
-        
         KINEMATIC_DEBUG_PRINT("Position error: " << positionError[0] << " " << positionError[1] << " " << positionError[2]);
-        
-        
+
         // // Declare and initialize the axis-angle arrays
         // mjtNum mujocoAxisAngle[3];
         // mjtNum mujocoEeRotMat[9];
 
-
-        
         // 9. Compute orientation error
         // mj_mat2AxisAngle(mujocoAxisAngle, eeRotMat);
         // Eigen::Vector3d theoreticalAxisAngle = theoreticalEeRotMat.eulerAngles(0, 1, 2); // Example conversion, adjust as needed
         // mjtNum orientationError = mju_dist3(mujocoAxisAngle, theoreticalAxisAngle.data());
         // 10. Print errors
-        
+
         // printf("Orientation error: %f\n", orientationError);
 
         // // 5. Calculate theoretical forward kinematics
