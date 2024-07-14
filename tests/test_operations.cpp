@@ -106,3 +106,62 @@ TEST(OperationsTest, ScrewMatTest) {
     }
 }
 // Add more tests for other functions
+TEST(OperationsTest, ScrewMatTest_UR5_6R) {
+    // Define joint axes
+    std::vector<Eigen::Vector3d> joint_axes = {
+        {0, 0, 1},
+        {0, 1, 0},
+        {0, 1, 0},
+        {0, 1, 0},
+        {0, 0, -1},
+        {0, 1, 0}
+    };
+    double W1=0.109, W2=0.082, L1=0.425, L2=0.392 ,H1=0.089, H2=0.095;
+
+     // Define points on the joint axes
+    std::vector<Eigen::Vector3d> joint_points = {
+        {0, 0, 0},                // joint1
+        {0, 0, H1},          // joint2
+        {L1, 0,H1}, // joint3
+        {L1+L2, 0, H1}, // joint4
+        {L1+L2, W1, 0}, // joint5
+        {L1+L2, 0,H1-H2} // joint6
+    };
+
+
+    // Define joint types
+    std::vector<std::string> joint_types = {
+        "revolute",
+        "revolute",
+        "revolute",
+        "revolute",
+        "revolute",
+        "revolute"
+    };
+
+    // Call the ScrewMat function
+    Eigen::MatrixXd Slist = mr::ScrewMat(joint_axes, joint_points, joint_types);
+
+    // Expected result
+    Eigen::MatrixXd expected_Slist(6, 6);
+    expected_Slist << 0,    0,    0,   0 , 0, 0,
+                      0,    1,    1,   1,  0, 1,
+                      1,    0,    0,   0,  -1, 0,
+                      0,    -H1,  -H1, -H1, -W1, H2-H1,
+                      0,    0,   0,    0, L1+L2,0 ,
+                      0,   0,    L1, L1+L2,0, L1+L2;
+
+    // Print the result for debugging
+    std::cout << "Slist matrix:\n" << Slist << std::endl;
+
+    // Check the size of the result
+    ASSERT_EQ(Slist.rows(), 6);
+    ASSERT_EQ(Slist.cols(), 6);
+
+    // Check the values in the result
+    for (int i = 0; i < Slist.rows(); ++i) {
+        for (int j = 0; j < Slist.cols(); ++j) {
+            EXPECT_NEAR(Slist(i, j), expected_Slist(i, j), 1e-10) << "Mismatch at (" << i << ", " << j << ")";
+        }
+    }
+}
