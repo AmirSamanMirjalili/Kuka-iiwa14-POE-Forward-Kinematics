@@ -83,6 +83,178 @@ namespace mr
         return Slist;
     }
 
+    EndEffectorInfo getEndEffectorInfo(const mjModel *m, mjData *d)
+    {
+        const char *eeBodyName = "endeffector";
+        int eeBodyId = mj_name2id(m, mjOBJ_BODY, eeBodyName);
+        if (eeBodyId < 0)
+        {
+            mju_error("Could not find end-effector body");
+        }
+
+        EndEffectorInfo info;
+        mju_copy3(info.position.data(), d->xpos + 3 * eeBodyId);
+        Eigen::Map<Eigen::Matrix3d> rotMat(d->xmat + 9 * eeBodyId);
+        info.rotation = rotMat;
+
+        KINEMATIC_DEBUG_PRINT("End-effector position: (" << info.position[0] << ", " << info.position[1] << ", " << info.position[2] << ")");
+        KINEMATIC_DEBUG_PRINT("End-effector rotation matrix:\n" << info.rotation);
+
+        return info;
+    }
+
+    Eigen::VectorXd getJointAngles(const mjModel *m, mjData *d)
+    {
+        Eigen::VectorXd jointAngles(m->njnt);
+        for (int i = 0; i < m->njnt; ++i)
+        {
+            jointAngles[i] = d->qpos[m->jnt_qposadr[i]];
+        }
+
+        KINEMATIC_DEBUG_PRINT("Joint angles: " << jointAngles.transpose());
+
+        return jointAngles;
+    }
+
+    JointInfo defineJointInfo(const mjModel *m, mjData *d, const std::shared_ptr<mjtNum[]> &linkLengths)
+    {
+        JointInfo info;
+        info.axes = {
+            {0, 0, 1}, {0, 1, 0}, {0, 0, 1}, {0, -1, 0}, {0, 0, 1}, {0, 1, 0}, {0, 0, 1}};
+
+        mjtNum baseFrame[3];
+        mj_local2Global(d, baseFrame, NULL, m->jnt_pos + 3 * m->jnt_bodyid[0], NULL, m->jnt_bodyid[0], 0);
+        info.baseFrame = Eigen::Map<Eigen::Vector3d>(baseFrame);
+
+        double totalLength = 0;
+        for (int i = 0; i < m->njnt; ++i)
+        {
+            info.points.push_back({0, 0, totalLength});
+            totalLength += linkLengths[i];
+        }
+
+        for (auto &point : info.points)
+        {
+            point += info.baseFrame;
+        }
+
+        info.types = std::vector<std::string>(m->njnt, "revolute");
+
+        KINEMATIC_DEBUG_PRINT("Joint axes: ");
+        for (const auto &axis : info.axes)
+        {
+            KINEMATIC_DEBUG_PRINT(axis.transpose());
+        }
+
+        KINEMATIC_DEBUG_PRINT("Joint points: ");
+        for (const auto &point : info.points)
+        {
+            KINEMATIC_DEBUG_PRINT(point.transpose());
+        }
+
+        KINEMATIC_DEBUG_PRINT("Joint types: ");
+        for (const auto &type : info.types)
+        {
+            KINEMATIC_DEBUG_PRINT(type);
+        }
+
+        return info;
+    }
+
+    Eigen::Vector3d calculateEndEffectorOffset(const mjModel *m, mjData *d, const Eigen::Vector3d &eePosition)
+    {
+        // Get the global position of the last joint
+        int last_joint_id = m->njnt - 1;
+        mjtNum last_joint_pos[3];
+        mj_local2Global(d, last_joint_pos, NULL, m->jnt_pos + 3 * last_joint_id, NULL, m->jnt_bodyid[last_joint_id], 0);
+        Eigen::Vector3d last_joint_pos_eigen(last_joint_pos[0], last_joint_pos[1], last_joint_pos[2]);
+
+        // Calculate the end-effector offset
+        Eigen::Vector3d eeOffset = eePosition - last_joint_pos_eigen;
+
+        //joint id and its position
+        KINEMATIC_DEBUG_PRINT("Last joint ID: " << last_joint_id);
+        KINEMATIC_DEBUG_PRINT("Last joint position: (" << last_joint_pos_eigen[0] << ", " << last_joint_pos_eigen[1] << ", " << last_joint_pos_eigen[2] << ")");
+        KINEMATIC_DEBUG_PRINT("End-effector offset: (" << eeOffset[0] << ", " << eeOffset[1] << ", " << eeOffset[2] << ")");
+
+        return eeOffset;
+    }
+
+    Eigen::Matrix4d defineHomeConfiguration(const std::shared_ptr<mjtNum[]> &linkLengths, const Eigen::Vector3d &baseFrame, const Eigen::Vector3d &eeOffset)
+    {
+        double totalLength = 0;
+        for (int i = 0; i < m->njnt; ++i)
+        {
+            totalLength += linkLengths[i];
+        }
+
+        Eigen::Matrix4d M = Eigen::Matrix4d::Identity();
+        M.block<3, 1>(0, 3) << 0, 0, totalLength;
+        M.block<3, 1>(0, 3) += baseFrame + eeOffset;
+
+        KINEMATIC_DEBUG_PRINT("Home configuration matrix M:\n" << M);
+
+        return M;
+    }
+
+    Eigen::MatrixXd calculateScrewAxes(const JointInfo &jointInfo)
+    {
+        return mr::ScrewMat(jointInfo.axes, jointInfo.points, jointInfo.types);
+    }
+
+    Eigen::Matrix4d computeForwardKinematics(const Eigen::Matrix4d &M, const Eigen::MatrixXd &Slist, const Eigen::VectorXd &jointAngles)
+    {
+        Eigen::Matrix4d T = mr::FKinSpace(M, Slist, jointAngles);
+        KINEMATIC_DEBUG_PRINT("Forward kinematics result T:\n" << T);
+        return T;
+    }
+
+    void compareResults(const EndEffectorInfo &eeInfo, const Eigen::Matrix4d &T)
+    {
+        Eigen::Vector3d theoreticalEePos = T.block<3, 1>(0, 3);
+        Eigen::Matrix3d theoreticalEeRotMat = T.block<3, 3>(0, 0);
+
+        Eigen::Vector3d positionError = eeInfo.position - theoreticalEePos;
+        Eigen::Matrix3d R_error = eeInfo.rotation.transpose() * theoreticalEeRotMat;
+        Eigen::Vector4d axis_angle = mr::AxisAng3(mr::so3ToVec(mr::MatrixLog3(R_error)));
+        double angle_error = axis_angle(3);
+
+        KINEMATIC_DEBUG_PRINT("Position error: " << positionError.transpose());
+        KINEMATIC_DEBUG_PRINT("Orientation error (axis-angle distance): " << angle_error);
+    }
+
+    // void verifyForwardKinematics(const mjModel *m, mjData *d)
+    // {
+    //     // Get end-effector information
+    //     EndEffectorInfo eeInfo = getEndEffectorInfo(m, d);
+
+    //     // Get joint angles
+    //     Eigen::VectorXd jointAngles = getJointAngles(m, d);
+
+    //     // Calculate link lengths
+    //     std::shared_ptr<mjtNum[]> linkLengths = calculate_joint_distances();
+
+    //     // Define joint axes, points, and types
+    //     JointInfo jointInfo = defineJointInfo(m, d, linkLengths);
+
+    //     // Calculate the end-effector offset
+    //     Eigen::Vector3d eeOffset = calculateEndEffectorOffset(m, d, eeInfo.position);
+
+    //     // Define end-effector home configuration
+    //     Eigen::Matrix4d M = defineHomeConfiguration(linkLengths, jointInfo.baseFrame, eeOffset);
+
+    //     // Calculate screw axes
+    //     Eigen::MatrixXd Slist = calculateScrewAxes(jointInfo);
+
+    //     // Compute forward kinematics
+    //     Eigen::Matrix4d T = computeForwardKinematics(M, Slist, jointAngles);
+
+    //     // Compare results
+    //     compareResults(eeInfo, T);
+    // }
+
+    
+
     void verifyForwardKinematics(const mjModel *m, mjData *d)
     {
 
@@ -190,7 +362,6 @@ namespace mr
         //  Get the global positions of the joint0 which is the base frame
         //  Get the global position of the last joint (joint 6)
         // Get the number of joints
-        
 
         // Get the ID of the last joint
         int last_joint_id = Jonit_num - 1;
@@ -257,38 +428,18 @@ namespace mr
 
         KINEMATIC_DEBUG_PRINT("Position error: " << positionError[0] << " " << positionError[1] << " " << positionError[2]);
 
-        // // Declare and initialize the axis-angle arrays
-        // mjtNum mujocoAxisAngle[3];
-        // mjtNum mujocoEeRotMat[9];
-
         // 9. Compute orientation error
-        // mj_mat2AxisAngle(mujocoAxisAngle, eeRotMat);
-        // Eigen::Vector3d theoreticalAxisAngle = theoreticalEeRotMat.eulerAngles(0, 1, 2); // Example conversion, adjust as needed
-        // mjtNum orientationError = mju_dist3(mujocoAxisAngle, theoreticalAxisAngle.data());
-        // 10. Print errors
+        //converting the mujoco 9x1 rotation matrix to 3x3
+        Eigen::Matrix3d mujocoEeRotMat; // = Eigen::Map<Eigen::Matrix3d>(eeRotMat);
+        mujocoEeRotMat << eeRotMat[0], eeRotMat[1], eeRotMat[2],
+            eeRotMat[3], eeRotMat[4], eeRotMat[5],
+            eeRotMat[6], eeRotMat[7], eeRotMat[8];
+        // Method 1: Angle-Axis
+        Eigen::Matrix3d R_error = mujocoEeRotMat.transpose() * theoreticalEeRotMat;
+        Eigen::Vector4d axis_angle = mr::AxisAng3(mr::so3ToVec(mr::MatrixLog3(R_error)));
+        double angle_error1 = axis_angle(3);
+        KINEMATIC_DEBUG_PRINT("Orientation error (axis-angle distance): " << angle_error1);
 
-        // printf("Orientation error: %f\n", orientationError);
-
-        // // 5. Calculate theoretical forward kinematics
-        // mjtNum theoreticalEePos[3];
-        // mjtNum theoreticalEeRotMat[9];
-        // theoreticalFK(jointAngles, theoreticalEePos, theoreticalEeRotMat);
-
-        // // 6. Compare poses and print results (using MuJoCo utility functions)
-        // mjtNum positionError[3];
-        // mju_sub3(positionError, mujocoEePos, theoreticalEePos);
-
-        // // For orientation error, you'll need to adapt based on how you want to
-        // // represent and compare rotations in your theoreticalFK function.
-        // // Here's an example using axis-angle representation:
-        // mjtNum mujocoAxisAngle[3];
-        // mjtNum theoreticalAxisAngle[3];
-        // mj_mat2AxisAngle(mujocoAxisAngle, mujocoEeRotMat);
-        // mj_mat2AxisAngle(theoreticalAxisAngle, theoreticalEeRotMat);
-        // mjtNum orientationError = mju_dist3(mujocoAxisAngle, theoreticalAxisAngle);
-
-        // printf("End-effector position: (%f, %f, %f)\n", eePos[0], eePos[1], eePos[2]);
-        // printf("Orientation Error (axis-angle distance): %f\n", orientationError);
     }
 
     /* Function: Find if the value is negligible enough to consider 0

@@ -14,6 +14,7 @@ extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
 bool kinematic_debug_mode = true;
+bool use_zero_control = false;
 
 void init_mujoco() {
 
@@ -188,6 +189,20 @@ void init_control() {
     }
 
     
+}
+
+void zero_control() {
+    for (int i = 0; i < m->nu; i++) {
+        d->ctrl[i] = 0.0;
+    }
+}
+
+void init_control_wrapper() {
+    if (use_zero_control) {
+        zero_control();
+    } else {
+        init_control();
+    }
 }
 
 void update_control(const mjModel* m, mjData* d) {

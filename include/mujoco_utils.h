@@ -14,6 +14,7 @@ extern int* actuator_ids;
 extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
+extern bool use_zero_control;
 
 extern bool kinematic_debug_mode;
 
@@ -31,6 +32,10 @@ void print_sensor_data();
 void init_actuator_ids();
 void get_joint_information();
 std::shared_ptr<mjtNum[]> calculate_joint_distances();
+void init_control();
 void get_kinematic_parameters(const mjModel* m, mjData* d);
+void zero_control();
+void init_control_wrapper();
+
 
 #endif // MUJOCO_UTILS_H
