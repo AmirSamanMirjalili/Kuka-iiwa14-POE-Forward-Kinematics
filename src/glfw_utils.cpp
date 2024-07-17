@@ -1,8 +1,10 @@
 #include "glfw_utils.h"
 #include <stdio.h>
 #include <string.h>
+#include <globals.h>
 #include <cmath>
 #include "mujoco_utils.h"
+
 
 extern mjvCamera cam;
 extern mjvOption opt;
@@ -14,7 +16,7 @@ extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
 extern double pushStartX, pushStartY;
-extern mjModel *m;
+extern mjModel *m; 
 extern mjData *d;
 extern mjvPerturb pert;
 extern int mocap_body_id;

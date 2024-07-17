@@ -14,7 +14,15 @@ extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
 bool kinematic_debug_mode = true;
-bool use_zero_control = true;
+bool use_zero_control = false;
+bool use_test_control = false;
+enum ControlMode {
+    ZERO_CONTROL,
+    TEST_CONTROL,
+    DEFAULT_CONTROL
+};
+ControlMode currentControlMode = TEST_CONTROL; // Set default control mode
+
 
 void init_mujoco() {
 
@@ -156,17 +164,28 @@ void zero_control() {
 
 void test_control() {
     //only joints 3 and 5 are controlled
+    d->ctrl[2] = M_PI_2;
     d->ctrl[3] = M_PI_2;
-    d->ctrl[5] = M_PI_2;
+    //rest of the joints are zero
+    for (int i = 0; i < m->nu; i++) {
+        if (i != 3 && i != 5) {
+            d->ctrl[i] = 0.0;
+        }
+    }
 }
 
 void init_control_wrapper() {
-    if (use_zero_control) {
-        zero_control();
-    if (use_test_control) {
-        test_control();
-    } else {
-        init_control();
+    switch (currentControlMode) {
+        case ZERO_CONTROL:
+            zero_control();
+            break;
+        case TEST_CONTROL:
+            test_control();
+            break;
+        case DEFAULT_CONTROL:
+        default:
+            init_control();
+            break;
     }
 }
 
