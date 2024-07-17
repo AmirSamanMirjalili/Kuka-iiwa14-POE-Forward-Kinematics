@@ -170,13 +170,13 @@
   </contact>
 
   <actuator>
-    <position name="actuator1" joint="joint1" kp="100" kv="10" class="joint1" gear="100" />
-    <position name="actuator2" joint="joint2" kp="100" kv="10" class="joint2" gear="100" />
-    <position name="actuator3" joint="joint3" kp="100" kv="10" class="joint1" gear="100" />
-    <position name="actuator4" joint="joint4" kp="100" kv="10" class="joint2" gear="100" />
-    <position name="actuator5" joint="joint5" kp="100" kv="10" class="joint1" gear="100" />
-    <position name="actuator6" joint="joint6" kp="100" kv="10" class="joint2" gear="100" />
-    <position name="actuator7" joint="joint7" kp="100" kv="10" class="joint3" gear="100" />
+    <position name="actuator1" joint="joint1" kp="1000" kv="100" class="joint1"  />
+    <position name="actuator2" joint="joint2" kp="1000" kv="100" class="joint2"  />
+    <position name="actuator3" joint="joint3" kp="1000" kv="100" class="joint1"  />
+    <position name="actuator4" joint="joint4" kp="1000" kv="100" class="joint2"  />
+    <position name="actuator5" joint="joint5" kp="1000" kv="100" class="joint1"  />
+    <position name="actuator6" joint="joint6" kp="1000" kv="100" class="joint2"  />
+    <position name="actuator7" joint="joint7" kp="1000" kv="100" class="joint3"  />
 
     <!-- <general name="actuator2" joint="joint2" class="joint2"/>
      <general name="actuator3" joint="joint3" class="joint1"/>

@@ -15,8 +15,9 @@ extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
 extern bool use_zero_control;
-
 extern bool kinematic_debug_mode;
+
+
 
 #define DEBUG_PRINT(...) \
     do { if (debug_mode) fprintf(stderr, __VA_ARGS__); } while (0)

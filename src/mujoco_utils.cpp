@@ -14,7 +14,7 @@ extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
 bool kinematic_debug_mode = true;
-bool use_zero_control = false;
+bool use_zero_control = true;
 
 void init_mujoco() {
 
@@ -68,6 +68,7 @@ std::shared_ptr<mjtNum[]> calculate_joint_distances() {
     return link_length_array;
 }
 
+
 void get_joint_information() {
     
     // mj_kinematics(m, d);   
@@ -79,58 +80,14 @@ void get_joint_information() {
         printf("Joint %d global position: %f %f %f\n", i, global_joint_pos[0], global_joint_pos[1], global_joint_pos[2]);
     }
 
-    
-
-    // const int number_of_sensors = 7;
-    
-    // for (int i = 1; i < number_of_sensors+1; i++) {
-       
-    //     // construct the sensor name using the pattern
-    //     char sensor_name[100];
-    //     sprintf(sensor_name, "hinge_position_sensor%d", i);
-
-    //     // Get joint position from sensor data array
-    //     int sensorId = mj_name2id(m, mjOBJ_SENSOR, sensor_name);
-        
-    //     if(sensorId >= 0) {
-    //         // Access x, y, z coordinates from sensordata
-    //         mjtNum x = d->sensordata[sensorId];
-    //         mjtNum y = d->sensordata[sensorId + 1];
-    //         mjtNum z = d->sensordata[sensorId + 2];
- 
-
-
-    //         printf("Sensor %d: x=%f, y=%f, z=%f\n", i, x, y, z);
-
-           
-            
-    //     }
-    //     else 
-    //     {
-    //         printf("Sensor %d: not found\n", i);
-    //     }
-    // }
-
-
-
-
-    // for (int i = 0; i < m->njnt; i++) {
-    //     printf("Joint %d: type=%d, pos=[%f %f %f], axis=[%f %f %f]\n", 
-    //            i, m->jnt_type[i], d->xpos[m->jnt_qposadr[i]],d->xpos[m->jnt_qposadr[i]+1],d->xpos[m->jnt_qposadr[i]+2],
-    //            m->jnt_axis[3*i], m->jnt_axis[3*i+1], m->jnt_axis[3*i+2]);
-    //     // Access limits if m->jnt_limited[i] is true
-    //     if (m->jnt_limited[i]) {
-    //         printf("Range: [%f %f]\n", m->jnt_range[2*i], m->jnt_range[2*i+1]); 
-    //     }
-    // }
 }
 
 
 void get_kinematic_parameters(const mjModel* m, mjData* d) {
     get_joint_information();
     std::shared_ptr<mjtNum[]> link_length_array = calculate_joint_distances();
-    
-    
+
+
 }
 
 void cleanup_mujoco() {
@@ -197,16 +154,24 @@ void zero_control() {
     }
 }
 
+void test_control() {
+    //only joints 3 and 5 are controlled
+    d->ctrl[3] = M_PI_2;
+    d->ctrl[5] = M_PI_2;
+}
+
 void init_control_wrapper() {
     if (use_zero_control) {
         zero_control();
+    if (use_test_control) {
+        test_control();
     } else {
         init_control();
     }
 }
 
 void update_control(const mjModel* m, mjData* d) {
-    // init_control();
+    init_control_wrapper();
     get_kinematic_parameters(m,d);
     mr::verifyForwardKinematics(m, d);
     // print_sensor_data();
@@ -241,4 +206,5 @@ void print_sensor_data() {
     DEBUG_PRINT("Mocap Velocity: [%f %f %f]\n", velocity[0], velocity[1], velocity[2]);
     DEBUG_PRINT("End Effector Position: [%f %f %f]\n", ee_position[0], ee_position[1], ee_position[2]);
     DEBUG_PRINT("End Effector Velocity: [%f %f %f]\n", ee_velocity[0], ee_velocity[1], ee_velocity[2]);
+    
     }

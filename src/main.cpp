@@ -25,6 +25,7 @@ extern bool isPushing;
 extern int grabbedBodyId;
 extern mjtNum pushForce[3];
 extern double pushStartX, pushStartY;
+extern bool use_zero_control;
 
 void simulate_and_render(GLFWwindow* window) {
     while (!glfwWindowShouldClose(window)) {
@@ -53,6 +54,7 @@ void simulate_and_render(GLFWwindow* window) {
 }
 
 int main(int argc, const char** argv) {
+
     init_mujoco();
     init_glfw();
     init_actuator_ids();
