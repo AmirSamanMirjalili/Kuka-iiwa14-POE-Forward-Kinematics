@@ -5,8 +5,8 @@ set(SOURCES
     main.cpp
     mujoco_utils.cpp
     glfw_utils.cpp
-    Operations.cpp
     globals.cpp
+    Operations.cpp
 )
 
 # Add executable

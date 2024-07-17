@@ -9,7 +9,7 @@
 
 namespace mr
 {
-
+   void verifyForwardKinematics2(const mjModel *m, mjData *d);
    // Function to calculate and store screw axes in a matrix
    Eigen::MatrixXd ScrewMat(const std::vector<Eigen::Vector3d> &joint_axes,
                             const std::vector<Eigen::Vector3d> &joint_points,
@@ -47,6 +47,8 @@ namespace mr
       std::vector<std::string> types;
       Eigen::Vector3d baseFrame;
    };
+
+   
 
    JointInfo defineJointInfo(const mjModel *m, mjData *d, const std::shared_ptr<mjtNum[]> &linkLengths);
 

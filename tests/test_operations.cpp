@@ -296,6 +296,151 @@ TEST(OperationsTest, GetEndEffectorInfoTestAtHomePose) {
     std::cout << "MuJoCo cleaned up" << std::endl;
 }
 
+TEST(OperationsTest, DefineJointInfoTest) {
+    // Initialize MuJoCo
+    init_mujoco();
+
+     // // Create a mock link lengths array
+    // std::shared_ptr<mjtNum[]> linkLengths(new mjtNum[m->njnt]);
+    // for (int i = 0; i < m->njnt; ++i) {
+    //     linkLengths[i] = 0.1 * (i + 1); // Example link lengths
+    // }
+
+    // Create a mock link lengths array
+    std::shared_ptr<mjtNum[]> linkLengths(new mjtNum[m->njnt]);
+    linkLengths[0] = 0.2025;
+    linkLengths[1] = 0.2045;
+    linkLengths[2] = 0.2155;
+    linkLengths[3] = 0.1845;
+    linkLengths[4] = 0.2155;
+    linkLengths[5] = 0.081;
+
+    // Call the function to test
+    mr::JointInfo jointInfo = mr::defineJointInfo(m, d, linkLengths);
+
+    // Check the axes
+    std::vector<Eigen::Vector3d> expected_axes = {
+        {0, 0, 1}, {0, 1, 0}, {0, 0, 1}, {0, -1, 0}, {0, 0, 1}, {0, 1, 0}, {0, 0, 1}
+    };
+    ASSERT_EQ(jointInfo.axes.size(), expected_axes.size());
+    for (size_t i = 0; i < expected_axes.size(); ++i) {
+        EXPECT_TRUE(jointInfo.axes[i].isApprox(expected_axes[i])) << "Mismatch at axis " << i;
+    }
+
+    // Check the base frame
+    mjtNum baseFrame[3];
+    mj_local2Global(d, baseFrame, NULL, m->jnt_pos + 3 * m->jnt_bodyid[0], NULL, m->jnt_bodyid[0], 0);
+    Eigen::Vector3d expected_baseFrame(baseFrame[0], baseFrame[1], baseFrame[2]);
+    EXPECT_TRUE(jointInfo.baseFrame.isApprox(expected_baseFrame)) << "Base frame mismatch";
+
+    // Check the points
+    std::vector<Eigen::Vector3d> expected_points;
+    double totalLength = 0;
+    for (int i = 0; i < m->njnt; ++i) {
+        expected_points.push_back({0, 0, totalLength});
+        totalLength += linkLengths[i];
+    }
+    for (auto &point : expected_points) {
+        point += expected_baseFrame;
+    }
+    ASSERT_EQ(jointInfo.points.size(), expected_points.size());
+    for (size_t i = 0; i < expected_points.size(); ++i) {
+        EXPECT_TRUE(jointInfo.points[i].isApprox(expected_points[i])) << "Mismatch at point " << i;
+    }
+
+    // Check the types
+    std::vector<std::string> expected_types(m->njnt, "revolute");
+    ASSERT_EQ(jointInfo.types.size(), expected_types.size());
+    for (size_t i = 0; i < expected_types.size(); ++i) {
+        EXPECT_EQ(jointInfo.types[i], expected_types[i]) << "Mismatch at type " << i;
+    }
+
+    // Clean up MuJoCo
+    cleanup_mujoco();
+}
+
+TEST(OperationsTest, CalculateEndEffectorOffsetTest) {
+    // Initialize MuJoCo
+    init_mujoco();
+
+    // Set flag to use zero control
+    use_zero_control = true;
+
+    // Call init_control to set home position
+    init_control_wrapper();
+
+    // Run one step of simulation to update the robot state
+    mj_step(m, d);
+
+    // Mock end-effector position
+    Eigen::Vector3d eePosition(0.5, 0.5, 0.5);
+
+    // Call the function to test
+    Eigen::Vector3d eeOffset = mr::calculateEndEffectorOffset(m, d, eePosition);
+
+    // Get the global position of the last joint
+    int last_joint_id = m->njnt - 1;
+    mjtNum last_joint_pos[3];
+    mj_local2Global(d, last_joint_pos, NULL, m->jnt_pos + 3 * last_joint_id, NULL, m->jnt_bodyid[last_joint_id], 0);
+    Eigen::Vector3d last_joint_pos_eigen(last_joint_pos[0], last_joint_pos[1], last_joint_pos[2]);
+
+    // Calculate the expected end-effector offset
+    Eigen::Vector3d expected_eeOffset = eePosition - last_joint_pos_eigen;
+
+    // Print the values for debugging
+    std::cout << "End-effector position: " << eePosition.transpose() << std::endl;
+    std::cout << "Last joint position: " << last_joint_pos_eigen.transpose() << std::endl;
+    std::cout << "Calculated end-effector offset: " << eeOffset.transpose() << std::endl;
+    std::cout << "Expected end-effector offset: " << expected_eeOffset.transpose() << std::endl;
+
+    // Check if the calculated offset matches the expected offset
+    EXPECT_TRUE(eeOffset.isApprox(expected_eeOffset)) << "End-effector offset mismatch";
+
+    // Reset flag
+    use_zero_control = false;
+
+    // Clean up MuJoCo
+    cleanup_mujoco();
+}
+
+#include <gtest/gtest.h>
+#include "Operations.h"
+#include <iostream>
+#include <memory>
+
+TEST(OperationsTest, DefineHomeConfigurationTest) {
+    // Mock link lengths
+    std::shared_ptr<mjtNum[]> linkLengths(new mjtNum[3]);
+    linkLengths[0] = 0.5;
+    linkLengths[1] = 0.3;
+    linkLengths[2] = 0.2;
+
+    // Mock base frame
+    Eigen::Vector3d baseFrame(0.1, 0.2, 0.3);
+
+    // Mock end-effector offset
+    Eigen::Vector3d eeOffset(0.05, 0.05, 0.05);
+
+    // Expected total length
+    double expectedTotalLength = 0.5 + 0.3 + 0.2;
+
+    // Expected home configuration matrix
+    Eigen::Matrix4d expectedM = Eigen::Matrix4d::Identity();
+    expectedM.block<3, 1>(0, 3) << 0.1 + 0.05, 0.2 + 0.05, 0.3 + expectedTotalLength + 0.05;
+
+    // Call the function to test
+    Eigen::Matrix4d M = mr::defineHomeConfiguration(linkLengths, baseFrame, eeOffset);
+
+    // Print the result for debugging
+    std::cout << "Home configuration matrix M:\n" << M << std::endl;
+
+    // Check the values in the result
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            EXPECT_NEAR(M(i, j), expectedM(i, j), 1e-10) << "Mismatch at (" << i << ", " << j << ")";
+        }
+    }
+}
 // TEST(OperationsTest, HomeAndForwardKinematicsTest) {
 //     // Initialize MuJoCo
 //     init_mujoco();
