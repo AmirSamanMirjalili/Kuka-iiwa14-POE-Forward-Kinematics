@@ -4,7 +4,9 @@
 #include <GLFW/glfw3.h>
 #include <mujoco/mujoco.h>
 
-const double CTRL_UPDATE_FREQ = 100.0;
+
+
+extern const double CTRL_UPDATE_FREQ;
 
 
 extern const char* FILENAME;

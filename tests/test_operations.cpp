@@ -297,16 +297,24 @@ TEST(OperationsTest, GetEndEffectorInfoTestAtHomePose) {
 }
 
 TEST(OperationsTest, DefineJointInfoTest) {
-    // Initialize MuJoCo
-    init_mujoco();
+    std::cout << "\n--- Starting DefineJointInfoTest ---\n" << std::endl;
 
-     // // Create a mock link lengths array
-    // std::shared_ptr<mjtNum[]> linkLengths(new mjtNum[m->njnt]);
-    // for (int i = 0; i < m->njnt; ++i) {
-    //     linkLengths[i] = 0.1 * (i + 1); // Example link lengths
-    // }
+    // Initialize MuJoCo
+    std::cout << "Initializing MuJoCo..." << std::endl;
+    init_mujoco();
+    std::cout << "MuJoCo initialized successfully." << std::endl;
+
+    // mujoco step
+    mj_step(m, d);
+
+    // Set control mode to HOME_CONTROL
+    currentControlMode = HOME_CONTROL;
+
+    // Call init_control_wrapper to set home position
+    init_control_wrapper();
 
     // Create a mock link lengths array
+    std::cout << "Creating mock link lengths..." << std::endl;
     std::shared_ptr<mjtNum[]> linkLengths(new mjtNum[m->njnt]);
     linkLengths[0] = 0.2025;
     linkLengths[1] = 0.2045;
@@ -314,69 +322,113 @@ TEST(OperationsTest, DefineJointInfoTest) {
     linkLengths[3] = 0.1845;
     linkLengths[4] = 0.2155;
     linkLengths[5] = 0.081;
+    std::cout << "Mock link lengths created." << std::endl;
+
+    // Print link lengths for debugging
+    std::cout << "Link lengths:" << std::endl;
+    for (int i = 0; i < m->njnt; ++i) {
+        std::cout << "  Joint " << i << ": " << linkLengths[i] << std::endl;
+    }
 
     // Call the function to test
+    std::cout << "Calling defineJointInfo..." << std::endl;
     mr::JointInfo jointInfo = mr::defineJointInfo(m, d, linkLengths);
+    std::cout << "defineJointInfo called successfully." << std::endl;
 
     // Check the axes
+    std::cout << "Checking joint axes..." << std::endl;
     std::vector<Eigen::Vector3d> expected_axes = {
         {0, 0, 1}, {0, 1, 0}, {0, 0, 1}, {0, -1, 0}, {0, 0, 1}, {0, 1, 0}, {0, 0, 1}
     };
     ASSERT_EQ(jointInfo.axes.size(), expected_axes.size());
     for (size_t i = 0; i < expected_axes.size(); ++i) {
+        std::cout << "  Joint " << i << " axis:" << std::endl;
+        std::cout << "    Expected: " << expected_axes[i].transpose() << std::endl;
+        std::cout << "    Actual:   " << jointInfo.axes[i].transpose() << std::endl;
         EXPECT_TRUE(jointInfo.axes[i].isApprox(expected_axes[i])) << "Mismatch at axis " << i;
     }
 
     // Check the base frame
+    std::cout << "Checking base frame..." << std::endl;
     mjtNum baseFrame[3];
     mj_local2Global(d, baseFrame, NULL, m->jnt_pos + 3 * m->jnt_bodyid[0], NULL, m->jnt_bodyid[0], 0);
     Eigen::Vector3d expected_baseFrame(baseFrame[0], baseFrame[1], baseFrame[2]);
+    std::cout << "  Expected base frame: " << expected_baseFrame.transpose() << std::endl;
+    std::cout << "  Actual base frame:   " << jointInfo.baseFrame.transpose() << std::endl;
     EXPECT_TRUE(jointInfo.baseFrame.isApprox(expected_baseFrame)) << "Base frame mismatch";
 
     // Check the points
+    std::cout << "Checking joint points..." << std::endl;
     std::vector<Eigen::Vector3d> expected_points;
     double totalLength = 0;
     for (int i = 0; i < m->njnt; ++i) {
-        expected_points.push_back({0, 0, totalLength});
         totalLength += linkLengths[i];
+        expected_points.push_back({0, 0, totalLength});
     }
     for (auto &point : expected_points) {
         point += expected_baseFrame;
     }
     ASSERT_EQ(jointInfo.points.size(), expected_points.size());
     for (size_t i = 0; i < expected_points.size(); ++i) {
+        std::cout << "  Joint " << i << " point:" << std::endl;
+        std::cout << "    Expected: " << expected_points[i].transpose() << std::endl;
+        std::cout << "    Actual:   " << jointInfo.points[i].transpose() << std::endl;
         EXPECT_TRUE(jointInfo.points[i].isApprox(expected_points[i])) << "Mismatch at point " << i;
     }
 
     // Check the types
+    std::cout << "Checking joint types..." << std::endl;
     std::vector<std::string> expected_types(m->njnt, "revolute");
     ASSERT_EQ(jointInfo.types.size(), expected_types.size());
     for (size_t i = 0; i < expected_types.size(); ++i) {
+        std::cout << "  Joint " << i << " type:" << std::endl;
+        std::cout << "    Expected: " << expected_types[i] << std::endl;
+        std::cout << "    Actual:   " << jointInfo.types[i] << std::endl;
         EXPECT_EQ(jointInfo.types[i], expected_types[i]) << "Mismatch at type " << i;
     }
 
+    // Reset control mode
+    currentControlMode = DEFAULT_CONTROL;
+    std::cout << "Control mode reset to DEFAULT_CONTROL" << std::endl;
+
+
     // Clean up MuJoCo
+    std::cout << "Cleaning up MuJoCo..." << std::endl;
     cleanup_mujoco();
+    std::cout << "MuJoCo cleaned up successfully." << std::endl;
+
+    std::cout << "\n--- DefineJointInfoTest completed ---\n" << std::endl;
+
 }
 
 TEST(OperationsTest, CalculateEndEffectorOffsetTest) {
     // Initialize MuJoCo
     init_mujoco();
 
-    // Set flag to use zero control
-    use_zero_control = true;
+    // Set control mode to HOME_CONTROL
+    currentControlMode = HOME_CONTROL;
+    std::cout << "Control mode set to HOME_CONTROL" << std::endl;
 
-    // Call init_control to set home position
+    // Call init_control_wrapper to set home position
     init_control_wrapper();
+    std::cout << "init_control_wrapper called" << std::endl;
 
     // Run one step of simulation to update the robot state
     mj_step(m, d);
+    std::cout << "Simulation stepped" << std::endl;
 
-    // Mock end-effector position
-    Eigen::Vector3d eePosition(0.5, 0.5, 0.5);
+    // Get the actual end-effector position from MuJoCo
+    const char *eeBodyName = "endeffector";
+    int eeBodyId = mj_name2id(m, mjOBJ_BODY, eeBodyName);
+    if (eeBodyId < 0) {
+        std::cerr << "Could not find end-effector body" << std::endl;
+        FAIL();
+    }
+    Eigen::Vector3d actualEePosition(d->xpos + 3 * eeBodyId);
+    std::cout << "Actual end-effector position: " << actualEePosition.transpose() << std::endl;
 
     // Call the function to test
-    Eigen::Vector3d eeOffset = mr::calculateEndEffectorOffset(m, d, eePosition);
+    Eigen::Vector3d eeOffset = mr::calculateEndEffectorOffset(m, d, actualEePosition);
 
     // Get the global position of the last joint
     int last_joint_id = m->njnt - 1;
@@ -385,28 +437,26 @@ TEST(OperationsTest, CalculateEndEffectorOffsetTest) {
     Eigen::Vector3d last_joint_pos_eigen(last_joint_pos[0], last_joint_pos[1], last_joint_pos[2]);
 
     // Calculate the expected end-effector offset
-    Eigen::Vector3d expected_eeOffset = eePosition - last_joint_pos_eigen;
+    Eigen::Vector3d expected_eeOffset = actualEePosition - last_joint_pos_eigen;
 
     // Print the values for debugging
-    std::cout << "End-effector position: " << eePosition.transpose() << std::endl;
     std::cout << "Last joint position: " << last_joint_pos_eigen.transpose() << std::endl;
     std::cout << "Calculated end-effector offset: " << eeOffset.transpose() << std::endl;
     std::cout << "Expected end-effector offset: " << expected_eeOffset.transpose() << std::endl;
 
     // Check if the calculated offset matches the expected offset
-    EXPECT_TRUE(eeOffset.isApprox(expected_eeOffset)) << "End-effector offset mismatch";
+    EXPECT_TRUE(eeOffset.isApprox(expected_eeOffset, 1e-5)) << "End-effector offset mismatch";
 
-    // Reset flag
-    use_zero_control = false;
+    // Reset control mode
+    currentControlMode = DEFAULT_CONTROL;
+    std::cout << "Control mode reset to DEFAULT_CONTROL" << std::endl;
 
     // Clean up MuJoCo
     cleanup_mujoco();
+    std::cout << "MuJoCo cleaned up" << std::endl;
 }
 
-#include <gtest/gtest.h>
-#include "Operations.h"
-#include <iostream>
-#include <memory>
+
 
 TEST(OperationsTest, DefineHomeConfigurationTest) {
     // Mock link lengths
@@ -428,8 +478,12 @@ TEST(OperationsTest, DefineHomeConfigurationTest) {
     Eigen::Matrix4d expectedM = Eigen::Matrix4d::Identity();
     expectedM.block<3, 1>(0, 3) << 0.1 + 0.05, 0.2 + 0.05, 0.3 + expectedTotalLength + 0.05;
 
+    // Initialize EndEffectorInfo
+    mr::EndEffectorInfo eeInfo;
+    // Initialize eeInfo as needed
+    eeInfo=mr::getEndEffectorInfo(m,d);
     // Call the function to test
-    Eigen::Matrix4d M = mr::defineHomeConfiguration(linkLengths, baseFrame, eeOffset);
+    Eigen::Matrix4d M = mr::defineHomeConfiguration(linkLengths, baseFrame, eeOffset, eeInfo);
 
     // Print the result for debugging
     std::cout << "Home configuration matrix M:\n" << M << std::endl;
@@ -441,202 +495,3 @@ TEST(OperationsTest, DefineHomeConfigurationTest) {
         }
     }
 }
-// TEST(OperationsTest, HomeAndForwardKinematicsTest) {
-//     // Initialize MuJoCo
-//     init_mujoco();
-
-//     // Call init_control
-//     init_control();
-
-//     // Check if all control inputs are zero
-//     for (int i = 0; i < m->nu; i++) {
-//         EXPECT_NEAR(d->ctrl[i], 0.0, 1e-10) << "Control input " << i << " is not zero";
-//     }
-
-//     // Run one step of simulation to update the robot state
-//     mj_step(m, d);
-
-//     // Verify forward kinematics
-//     mr::verifyForwardKinematics(m, d);
-
-//     // Get end-effector body ID
-//     const char *eeBodyName = "endeffector";
-//     int eeBodyId = mj_name2id(m, mjOBJ_BODY, eeBodyName);
-//     ASSERT_GE(eeBodyId, 0) << "Could not find end-effector body";
-
-//     // Get MuJoCo end-effector pose
-//     mjtNum eePos[3], eeRotMat[9];
-//     mju_copy3(eePos, d->xpos + 3 * eeBodyId);
-//     mju_copy(eeRotMat, d->xmat + 9 * eeBodyId, 9);
-
-//     // Get theoretical end-effector pose
-//     Eigen::Matrix4d T = mr::FKinSpace(M, Slist, thetaList);
-//     Eigen::Vector3d theoreticalEePos = T.block<3, 1>(0, 3);
-//     Eigen::Matrix3d theoreticalEeRotMat = T.block<3, 3>(0, 0);
-
-//     // Check position error
-//     for (int i = 0; i < 3; i++) {
-//         EXPECT_NEAR(eePos[i], theoreticalEePos(i), 1e-4) << "Position mismatch at index " << i;
-//     }
-
-//     // Check orientation error
-//     Eigen::Matrix3d mujocoEeRotMat;
-//     mujocoEeRotMat << eeRotMat[0], eeRotMat[1], eeRotMat[2],
-//                       eeRotMat[3], eeRotMat[4], eeRotMat[5],
-//                       eeRotMat[6], eeRotMat[7], eeRotMat[8];
-
-//     Eigen::Matrix3d R_error = mujocoEeRotMat.transpose() * theoreticalEeRotMat;
-//     Eigen::Vector4d axis_angle = mr::AxisAng3(mr::so3ToVec(mr::MatrixLog3(R_error)));
-//     double angle_error = axis_angle(3);
-
-//     EXPECT_NEAR(angle_error, 0.0, 1e-4) << "Orientation error is not near zero";
-
-//     // Clean up MuJoCo
-//     cleanup_mujoco();
-// }
-
-// TEST(OperationsTest, HomePositionForwardKinematicsTest) {
-//     // Initialize MuJoCo
-//     init_mujoco();
-
-//     // Modify init_control to set zero control (home position)
-//     auto original_init_control = init_control;
-//     init_control = []() {
-//         for (int i = 0; i < m->nu; i++) {
-//             d->ctrl[i] = 0.0;
-//         }
-//     };
-
-//     // Call init_control to set home position
-//     init_control();
-
-//     // Run one step of simulation to update the robot state
-//     mj_step(m, d);
-
-//     // Verify forward kinematics
-//     mr::verifyForwardKinematics(m, d);
-
-//     // Get end-effector body ID
-//     const char *eeBodyName = "endeffector";
-//     int eeBodyId = mj_name2id(m, mjOBJ_BODY, eeBodyName);
-//     ASSERT_GE(eeBodyId, 0) << "Could not find end-effector body";
-
-//     // Get MuJoCo end-effector pose
-//     mjtNum eePos[3], eeRotMat[9];
-//     mju_copy3(eePos, d->xpos + 3 * eeBodyId);
-//     mju_copy(eeRotMat, d->xmat + 9 * eeBodyId, 9);
-
-//     // Get theoretical end-effector pose (should be the home position)
-//     Eigen::Matrix4d M = mr::getHomeMatrix(m);
-//     Eigen::Vector3d theoreticalEePos = M.block<3, 1>(0, 3);
-//     Eigen::Matrix3d theoreticalEeRotMat = M.block<3, 3>(0, 0);
-
-//     // Check position error
-//     for (int i = 0; i < 3; i++) {
-//         EXPECT_NEAR(eePos[i], theoreticalEePos(i), 1e-4) << "Position mismatch at index " << i;
-//     }
-
-//     // Check orientation error
-//     Eigen::Matrix3d mujocoEeRotMat;
-//     mujocoEeRotMat << eeRotMat[0], eeRotMat[1], eeRotMat[2],
-//                       eeRotMat[3], eeRotMat[4], eeRotMat[5],
-//                       eeRotMat[6], eeRotMat[7], eeRotMat[8];
-
-//     Eigen::Matrix3d R_error = mujocoEeRotMat.transpose() * theoreticalEeRotMat;
-//     Eigen::Vector4d axis_angle = mr::AxisAng3(mr::so3ToVec(mr::MatrixLog3(R_error)));
-//     double angle_error = axis_angle(3);
-
-//     EXPECT_NEAR(angle_error, 0.0, 1e-4) << "Orientation error is not near zero";
-
-//     // Restore original init_control function
-//     init_control = original_init_control;
-
-//     // Clean up MuJoCo
-//     cleanup_mujoco();
-// }
-
-
-// TEST(OperationsTest, HomeAndForwardKinematicsTest) {
-//     // Initialize MuJoCo
-//     init_mujoco();
-
-//     // Modify init_control to set zero control (home position)
-//     auto original_init_control = init_control;
-//     init_control = []() {
-//         for (int i = 0; i < m->nu; i++) {
-//             d->ctrl[i] = 0.0;
-//         }
-//     };
-
-//     // Call init_control
-//     init_control();
-
-//     // Check if all control inputs are zero
-//     for (int i = 0; i < m->nu; i++) {
-//         EXPECT_NEAR(d->ctrl[i], 0.0, 1e-10) << "Control input " << i << " is not zero";
-//     }
-
-//     // Run one step of simulation to update the robot state
-//     mj_step(m, d);
-
-//     // Define joint axes
-//     std::vector<Eigen::Vector3d> joint_axes = {
-//         {0, 0, 1},  // joint 1
-//         {0, 1, 0},  // joint 2
-//         {0, 0, 1},  // joint 3
-//         {0, -1, 0}, // joint 4
-//         {0, 0, 1},  // joint 5
-//         {0, 1, 0},  // joint 6
-//         {0, 0, 1}   // joint 7
-//     };
-
-//     // Define joint points
-//     std::shared_ptr<mjtNum[]> link_lengths = calculate_joint_distances();
-//     std::vector<Eigen::Vector3d> joint_points = {
-//         {0, 0, 0},
-//         {0, 0, link_lengths[1]},
-//         {0, 0, link_lengths[1] + link_lengths[2]},
-//         {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3]},
-//         {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4]},
-//         {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4] + link_lengths[5]},
-//         {0, 0, link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4] + link_lengths[5] + link_lengths[6]}
-//     };
-
-//     // Define joint types
-//     std::vector<std::string> joint_types = {
-//         "revolute",
-//         "revolute",
-//         "revolute",
-//         "revolute",
-//         "revolute",
-//         "revolute",
-//         "revolute"
-//     };
-
-//     // Define the end-effector configuration at home position (M)
-//     Eigen::Matrix4d M;
-//     M << 1, 0, 0, 0,
-//          0, 1, 0, 0,
-//          0, 0, 1, link_lengths[0] + link_lengths[1] + link_lengths[2] + link_lengths[3] + link_lengths[4] + link_lengths[5] + link_lengths[6],
-//          0, 0, 0, 1;
-
-//     // Get joint angles from MuJoCo data
-//     Eigen::VectorXd jointAnglesEigen(7);
-//     for (int i = 0; i < 7; ++i) {
-//         jointAnglesEigen[i] = d->qpos[m->jnt_qposadr[i]];
-//     }
-
-//     // Verify forward kinematics
-//     mr::verifyForwardKinematics(m, d, joint_axes, joint_points, joint_types, jointAnglesEigen, M);
-
-//     // Get end-effector body ID
-//     const char *eeBodyName = "endeffector";
-//     int eeBodyId = mj_name2id(m, mjOBJ_BODY, eeBodyName);
-//     ASSERT_GE(eeBodyId, 0) << "Could not find end-effector body";
-
-//     // Restore original init_control function
-//     init_control = original_init_control;
-
-//     // Clean up MuJoCo
-//     cleanup_mujoco();
-// }

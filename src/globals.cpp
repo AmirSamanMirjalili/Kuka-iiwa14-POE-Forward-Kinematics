@@ -2,7 +2,7 @@
 #include <mujoco/mujoco.h>
 
 
-
+const double CTRL_UPDATE_FREQ = 100.0; 
 const char* FILENAME = "/home/amir/Robotics/Mujoco/Projects/Kuka_calibration/Kuka-iiwa14-kinodyn-calibration/scene.xml";
 bool debug_mode = false;
 int* actuator_ids = nullptr;

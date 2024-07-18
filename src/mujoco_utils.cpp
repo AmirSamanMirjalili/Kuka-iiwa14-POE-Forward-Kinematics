@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include "Operations.h"
 #include <memory>
+#include <iostream>
 
-extern const double CTRL_UPDATE_FREQ;
 extern bool debug_mode;
 extern const char* FILENAME;
 extern mjModel* m;
@@ -16,12 +16,13 @@ extern mjtNum pushForce[3];
 bool kinematic_debug_mode = true;
 bool use_zero_control = false;
 bool use_test_control = false;
-enum ControlMode {
-    ZERO_CONTROL,
-    TEST_CONTROL,
-    DEFAULT_CONTROL
-};
-ControlMode currentControlMode = TEST_CONTROL; // Set default control mode
+ControlMode currentControlMode = HOME_CONTROL; // Or TEST_CONTROL, or whatever default you prefer
+
+// New global variables to store one-time calculations
+Eigen::Vector3d g_eeOffset;
+Eigen::Matrix4d g_homeConfiguration;
+Eigen::MatrixXd g_screwAxes;
+
 
 
 void init_mujoco() {
@@ -76,6 +77,27 @@ std::shared_ptr<mjtNum[]> calculate_joint_distances() {
     return link_length_array;
 }
 
+
+
+void calculateAndStoreHomeParameters(const mjModel* m, mjData* d) {
+    // Get end-effector information
+    mr::EndEffectorInfo eeInfo = mr::getEndEffectorInfo(m, d);
+
+    // Calculate link lengths
+    std::shared_ptr<mjtNum[]> linkLengths = calculate_joint_distances();
+
+    // Define joint axes, points, and types
+    mr::JointInfo jointInfo = mr::defineJointInfo(m, d, linkLengths);
+
+    // Calculate and store the end-effector offset
+    g_eeOffset = mr::calculateEndEffectorOffset(m, d, eeInfo.position);
+
+    // Define and store end-effector home configuration
+    g_homeConfiguration = mr::defineHomeConfiguration(linkLengths, jointInfo.baseFrame, g_eeOffset, eeInfo);
+
+    // Calculate and store screw axes
+    g_screwAxes = mr::calculateScrewAxes(jointInfo);
+}
 
 void get_joint_information() {
     
@@ -176,7 +198,7 @@ void test_control() {
 
 void init_control_wrapper() {
     switch (currentControlMode) {
-        case ZERO_CONTROL:
+        case HOME_CONTROL:
             zero_control();
             break;
         case TEST_CONTROL:
@@ -190,11 +212,19 @@ void init_control_wrapper() {
 }
 
 void update_control(const mjModel* m, mjData* d) {
-    init_control_wrapper();
-    get_kinematic_parameters(m,d);
-    mr::verifyForwardKinematics(m, d);
-    // print_sensor_data();
+    if (currentControlMode == HOME_CONTROL) {
+        zero_control();
+        calculateAndStoreHomeParameters(m, d);
+        currentControlMode = TEST_CONTROL;  // Switch to DEFAULT_CONTROL after HOME_CONTROL
+    } else {
+        init_control_wrapper();
+    }
+    
+    get_kinematic_parameters(m, d);
+    mr::verifyForwardKinematics(m, d, g_homeConfiguration, g_screwAxes);
 }
+
+
 
 void print_sensor_data() {
     // Get sensor IDs

@@ -30,13 +30,20 @@ namespace mr
    Eigen::VectorXd CalculateScrewAxis(const std::string &joint_type, const Eigen::Vector3d &axis_direction,
                                       const Eigen::Vector3d &point_on_axis);
 
-   void verifyForwardKinematics(const mjModel *m, mjData *data);
-
+   void verifyForwardKinematics(const mjModel *m, mjData *d, const Eigen::Matrix4d& M, const Eigen::MatrixXd& Slist);
+   
    struct EndEffectorInfo
    {
       Eigen::Vector3d position;
       Eigen::Matrix3d rotation;
    };
+   std::vector<ErrorData> errorHistory;
+
+   struct ErrorData {
+    double time;
+    Eigen::Vector3d positionError;
+    double orientationError;
+};
 
    EndEffectorInfo getEndEffectorInfo(const mjModel *m, mjData *d);
 

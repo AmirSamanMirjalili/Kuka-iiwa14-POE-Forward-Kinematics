@@ -6,12 +6,12 @@
 #include <cmath>
 #include "mujoco_utils.h"
 #include "glfw_utils.h"
+#include "globals.h"
 
 // Define the global variables
 // Declare global variables as extern
 extern bool debug_mode;
 extern const char* FILENAME;
-extern const double CTRL_UPDATE_FREQ;
 extern mjModel* m;
 extern mjData* d;
 extern mjvCamera cam;

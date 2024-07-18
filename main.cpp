@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cmath>
+#include "globals.h"
 
-const char* FILENAME = "/home/amir/Robotics/Mujoco/Projects/Kuka_calibration/Kuka-iiwa14-kinodyn-calibration/scene.xml";
-const double CTRL_UPDATE_FREQ = 100.0;
+
 
 
 
