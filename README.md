@@ -1,4 +1,4 @@
-# KUKA LBR iiwa 14 Forward Kinematics (POE based) Verifiction
+# KUKA LBR iiwa 14 POE based Kinematic Calibration
 
 
 ## MuJoCo Robotics Project
