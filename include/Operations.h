@@ -8,6 +8,7 @@
 #include <memory>
 #include <utility>
 #include <cmath>
+#include <globals.h>
 
 namespace mr
 {
@@ -30,20 +31,15 @@ namespace mr
    Eigen::VectorXd CalculateScrewAxis(const std::string &joint_type, const Eigen::Vector3d &axis_direction,
                                       const Eigen::Vector3d &point_on_axis);
 
-   void verifyForwardKinematics(const mjModel *m, mjData *d, const Eigen::Matrix4d& M, const Eigen::MatrixXd& Slist);
-   
+   void verifyForwardKinematics(const mjModel *m, mjData *d, const Eigen::Matrix4d &M, const Eigen::MatrixXd &Slist, std::vector<ErrorData> &errorHistory);
+
+   void writeErrorHistoryToFile(const std::vector<ErrorData> &errorHistory, const std::string &filename);
+
    struct EndEffectorInfo
    {
       Eigen::Vector3d position;
       Eigen::Matrix3d rotation;
    };
-   std::vector<ErrorData> errorHistory;
-
-   struct ErrorData {
-    double time;
-    Eigen::Vector3d positionError;
-    double orientationError;
-};
 
    EndEffectorInfo getEndEffectorInfo(const mjModel *m, mjData *d);
 
@@ -57,18 +53,16 @@ namespace mr
       Eigen::Vector3d baseFrame;
    };
 
-
-
    JointInfo defineJointInfo(const mjModel *m, mjData *d, const std::shared_ptr<mjtNum[]> &linkLengths);
 
    Eigen::Vector3d calculateEndEffectorOffset(const mjModel *m, mjData *d, const Eigen::Vector3d &eePosition);
-   Eigen::Matrix4d defineHomeConfiguration(const std::shared_ptr<mjtNum[]> &linkLengths, const Eigen::Vector3d &baseFrame, const Eigen::Vector3d &eeOffset,EndEffectorInfo &eeInfo);
+   Eigen::Matrix4d defineHomeConfiguration(const std::shared_ptr<mjtNum[]> &linkLengths, const Eigen::Vector3d &baseFrame, const Eigen::Vector3d &eeOffset, EndEffectorInfo &eeInfo);
    Eigen::MatrixXd calculateScrewAxes(const JointInfo &jointInfo);
 
    Eigen::Matrix4d computeForwardKinematics(const Eigen::Matrix4d &M, const Eigen::MatrixXd &Slist, const Eigen::VectorXd &jointAngles);
 
    void compareResultsPrint(const EndEffectorInfo &eeInfo, const Eigen::Matrix4d &T);
-    std::pair<Eigen::Vector3d, double> compareResults(const EndEffectorInfo &eeInfo, const Eigen::Matrix4d &T);
+   std::pair<Eigen::Vector3d, double> compareResults(const EndEffectorInfo &eeInfo, const Eigen::Matrix4d &T);
    /*
     * Function: Find if the value is negligible enough to consider 0
     * Inputs: value to be checked as a double
@@ -82,7 +76,7 @@ namespace mr
     * Output: Eigen::MatrixXd (6x6)
     * Note: Can be used to calculate the Lie bracket [V1, V2] = [adV1]V2
     */
-   Eigen::MatrixXd ad(const Eigen::VectorXd& V);
+   Eigen::MatrixXd ad(const Eigen::VectorXd &V);
    /*
     * Function: Returns a normalized version of the input vector
     * Input: Eigen::MatrixXd

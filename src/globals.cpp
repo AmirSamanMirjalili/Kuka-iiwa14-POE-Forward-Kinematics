@@ -1,5 +1,8 @@
 #include <GLFW/glfw3.h>
 #include <mujoco/mujoco.h>
+#include <vector>
+#include <Eigen/Dense>
+#include "globals.h"
 
 
 const double CTRL_UPDATE_FREQ = 100.0; 
@@ -20,3 +23,4 @@ mjModel* m = nullptr;
 mjData* d = nullptr;
 mjvPerturb pert;
 int mocap_body_id = -1;
+std::vector<ErrorData> errorHistory;

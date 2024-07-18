@@ -4,7 +4,15 @@
 #include <GLFW/glfw3.h>
 #include <mujoco/mujoco.h>
 
+   struct ErrorData {
+    double time;
+    Eigen::Vector3d positionError;
+    double orientationError;
+};
 
+
+
+extern std::vector<ErrorData> errorHistory;
 
 extern const double CTRL_UPDATE_FREQ;
 

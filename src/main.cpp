@@ -7,6 +7,7 @@
 #include "mujoco_utils.h"
 #include "glfw_utils.h"
 #include "globals.h"
+#include "Operations.h"
 
 // Define the global variables
 // Declare global variables as extern
@@ -66,6 +67,8 @@ int main(int argc, const char** argv) {
 
     GLFWwindow* window = glfwGetCurrentContext();
     simulate_and_render(window);
+
+    mr::writeErrorHistoryToFile(errorHistory, "error_history.csv");
 
     cleanup_mujoco();
     return 0;

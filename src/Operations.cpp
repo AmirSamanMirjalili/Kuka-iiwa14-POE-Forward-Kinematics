@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 extern mjData *d;
 extern mjModel *m;
@@ -288,7 +289,7 @@ namespace mr
         return std::make_pair(positionError, angle_error);
     }
 
-    void verifyForwardKinematics(const mjModel *m, mjData *d, const Eigen::Matrix4d &M, const Eigen::MatrixXd &Slist)
+    void verifyForwardKinematics(const mjModel *m, mjData *d, const Eigen::Matrix4d &M, const Eigen::MatrixXd &Slist, std::vector<ErrorData> &errorHistory)
     {
         // Get end-effector information
         EndEffectorInfo eeInfo = getEndEffectorInfo(m, d);
@@ -302,7 +303,17 @@ namespace mr
         // Compare results and get errors
         auto [positionError, orientationError] = compareResults(eeInfo, T);
 
-        // You can now use positionError and orientationError as needed
+
+         // Save error data
+        ErrorData errorData;
+        errorData.time = d->time;
+        errorData.positionError = positionError;
+        errorData.orientationError = orientationError;
+        errorHistory.push_back(errorData);
+
+
+        // Print debug information
+        KINEMATIC_DEBUG_PRINT("Time: " << errorData.time);
         KINEMATIC_DEBUG_PRINT("Position error magnitude: " << positionError.norm());
         KINEMATIC_DEBUG_PRINT("Orientation error: " << orientationError);
 
@@ -321,6 +332,30 @@ namespace mr
             KINEMATIC_DEBUG_PRINT("Forward kinematics verification passed.");
         }
     }
+
+
+    void writeErrorHistoryToFile(const std::vector<ErrorData> &errorHistory, const std::string &filename)
+{
+    std::ofstream outFile(filename);
+    if (outFile.is_open())
+    {
+        outFile << "Time,PosErrorX,PosErrorY,PosErrorZ,OrientationError\n";
+        for (const auto &error : errorHistory)
+        {
+            outFile << error.time << ","
+                    << error.positionError.x() << ","
+                    << error.positionError.y() << ","
+                    << error.positionError.z() << ","
+                    << error.orientationError << "\n";
+        }
+        outFile.close();
+        KINEMATIC_DEBUG_PRINT("Error history written to " << filename);
+    }
+    else
+    {
+        KINEMATIC_DEBUG_PRINT("Unable to open file: " << filename);
+    }
+}
 
     // void verifyForwardKinematics(const mjModel *m, mjData *d)
     // {

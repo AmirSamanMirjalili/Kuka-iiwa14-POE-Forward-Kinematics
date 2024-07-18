@@ -215,13 +215,13 @@ void update_control(const mjModel* m, mjData* d) {
     if (currentControlMode == HOME_CONTROL) {
         zero_control();
         calculateAndStoreHomeParameters(m, d);
-        currentControlMode = TEST_CONTROL;  // Switch to DEFAULT_CONTROL after HOME_CONTROL
+        currentControlMode = DEFAULT_CONTROL;  // Switch to DEFAULT_CONTROL after HOME_CONTROL
     } else {
         init_control_wrapper();
     }
     
     get_kinematic_parameters(m, d);
-    mr::verifyForwardKinematics(m, d, g_homeConfiguration, g_screwAxes);
+    mr::verifyForwardKinematics(m, d, g_homeConfiguration, g_screwAxes, errorHistory);
 }
 
 
