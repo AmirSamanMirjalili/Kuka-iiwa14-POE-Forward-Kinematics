@@ -1,8 +1,7 @@
 # KUKA LBR iiwa 14 Forward Kinematics (POE based) Verifiction
 
-Requires MuJoCo 2.3.3 or later.
 
-# MuJoCo Robotics Project
+## MuJoCo Robotics Project
 
 This package contains a simplified robot description (MJCF) of the [LBR iiwa](https://www.kuka.com/en-us/products/robotics-systems/industrial-robots/lbr-iiwa) 14kg developed by [mujoco_menagerie](https://www.bing.com/search?pglt=673&q=mujoco_menagerie&cvid=8f9cd7201ba741a7aa50020d20a1cfc5&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBCDEwMjhqMGoxqAIAsAIA&FORM=ANNTA1&PC=U531) developers. 
 I have added the C++ implementation of robotics algorithms using MuJoCo for simulation and visualization. It includes forward kinematics based on the product of exponential and verified using mujoco. be aware that the code is not clean !!
