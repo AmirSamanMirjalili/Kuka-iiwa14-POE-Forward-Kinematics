@@ -1,31 +1,82 @@
-# KUKA LBR iiwa 14 Description (MJCF)
+# KUKA LBR iiwa 14 Forward Kinematics (POE based) Verifiction
 
 Requires MuJoCo 2.3.3 or later.
 
-## Overview
+# MuJoCo Robotics Project
 
-This package contains a simplified robot description (MJCF) of the [LBR iiwa](https://www.kuka.com/en-us/products/robotics-systems/industrial-robots/lbr-iiwa) 14kg developed
-by [KUKA Robotics](https://www.kuka.com/en-us). It is derived from the [publicly available](https://github.com/RobotLocomotion/drake/blob/master/manipulation/models/iiwa_description/urdf/iiwa14_spheres_dense_collision.urdf)
-URDF description created by the [Drake](https://github.com/RobotLocomotion/drake) developers.
+This package contains a simplified robot description (MJCF) of the [LBR iiwa](https://www.kuka.com/en-us/products/robotics-systems/industrial-robots/lbr-iiwa) 14kg developed by [mujoco_menagerie](https://www.bing.com/search?pglt=673&q=mujoco_menagerie&cvid=8f9cd7201ba741a7aa50020d20a1cfc5&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBCDEwMjhqMGoxqAIAsAIA&FORM=ANNTA1&PC=U531) developers. 
+I have added the C++ implementation of robotics algorithms using MuJoCo for simulation and visualization. It includes forward kinematics based on the product of exponential and verified using mujoco
 
 <p float="left">
   <img src="iiwa_14.png" width="400">
 </p>
 
-## URDF → MJCF derivation steps
 
-1. Added `<mujoco> <compiler discardvisual="false"/> </mujoco>` to the
-   [URDF](https://github.com/RobotLocomotion/drake/blob/master/manipulation/models/iiwa_description/urdf/iiwa14_spheres_dense_collision.urdf)'s
-   `<robot>` clause in order to preserve visual geometries.
-2. Loaded the URDF into MuJoCo and saved a corresponding MJCF.
-3. Created base body and added its corresponding inertial properties.
-4. Added a tracking light to the base.
-5. Manually edited the MJCF to extract common properties into the `<default>` section.
-6.  Added `<exclude>` clauses to prevent collisions between `base` and `link1`.
-7.  Added actuators for the arm.
-8.  Added forcelimits to match the torque limits in the [spec sheet](https://www.reeco.co.uk/wp-content/uploads/2020/05/KUKA-LBR-iiwa-technical-data.pdf).
-9.  Added `scene.xml` which includes the robot, with a textured groundplane, skybox, and haze.
+## Prerequisites
+
+- CMake (version 3.10 or higher)
+- C++17 compatible compiler
+- MuJoCo
+- GLFW3
+- Eigen3
+
+## Project Structure
+
+The project is organized as follows:
+
+- `src/`: Contains the main source code files
+- `include/`: Contains header files
+- `tests/`: Contains test files
+- `CMakeLists.txt`: Main CMake configuration file
+
+## Building the Project
+
+1. Create a build directory:
+   ```
+   mkdir build && cd build
+   ```
+
+2. Run CMake:
+   ```
+   cmake ..
+   ```
+
+3. Build the project:
+   ```
+   make
+   ```
+
+## Running the Project
+
+After building, you can run the main executable:
+
+```
+./src/main
+```
+
+## Running Tests
+
+To run the tests, use the following command from the build directory:
+
+```
+ctest
+```
+
+## Key Features
+
+- Forward and inverse kinematics calculations
+- MuJoCo integration for robot simulation
+- GLFW for visualization
+- Eigen library for matrix operations
+- Unit tests using Google Test framework
 
 ## License
 
-This model is released under a [BSD-3-Clause License](LICENSE).
+
+## Contributing
+
+
+## Contact
+
+
+
